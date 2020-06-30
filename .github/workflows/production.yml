@@ -31,7 +31,7 @@ jobs:
       with:
         switches: -avzr
         path: static/
-        remote_path: /opt/pleroma/lib/pleroma-2.0.7-stable/priv
+        remote_path: /opt/pleroma/lib/pleroma-2.0.7-stable/priv/static
         remote_host: ${{ secrets.DEPLOY_HOST }}
         remote_port: ${{ secrets.DEPLOY_PORT }}
         remote_user: ${{ secrets.DEPLOY_USER }}
