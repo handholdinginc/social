@@ -1,4 +1,5 @@
 {
+    "logo": "/instance/hh-logo.svg",
     "navlinks": {
         "homeFooter": [
             { "title": "About", "url": "/about" },
