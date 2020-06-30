@@ -89,6 +89,11 @@ class TabsBar extends React.PureComponent {
         </NavLink>);
     }
     links.push(
+      <a key='stream' className='tabs-bar__link' exact href='https://stream.handholding.io/list' data-preview-title-id='column.stream'>
+        <Icon id='film' />
+        <span><FormattedMessage id='tabs_bar.stream' defaultMessage='Streaming' /></span>
+      </a>);
+    links.push(
       <NavLink key='search' className='tabs-bar__link tabs-bar__link--search' to='/search' data-preview-title-id='tabs_bar.search'>
         <Icon id='search' />
         <span><FormattedMessage id='tabs_bar.search' defaultMessage='Search' /></span>

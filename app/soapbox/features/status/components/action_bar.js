@@ -103,6 +103,28 @@ class ActionBar extends React.PureComponent {
     }
   }
 
+  handleTTSClick = (e) => {
+    const { me } = this.props;
+    if (me) {
+        var text = "content="+this.props.status.get('search_index');
+        fetch('http://social.handholding.io/predict', {
+            method: 'POST',
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: text
+        }).then(response => response.text().then( res =>
+                {
+                    var r = JSON.parse(res);
+                    var s = r.snd;
+                    var snd = new Audio("data:audio/wav;base64," + s);
+                    snd.play();
+                }));
+    } else {
+      this.props.onOpenUnauthorizedModal();
+    }
+  }
+    
   handleFavouriteClick = () => {
     const { me } = this.props;
     if (me) {
@@ -303,6 +325,14 @@ class ActionBar extends React.PureComponent {
             icon={reblogIcon}
             onClick={this.handleReblogClick}
             text={intl.formatMessage(messages.reblog)}
+          />
+        </div>
+        <div className='detailed-status__button'>
+          <IconButton
+            title={'Text to Speech'}
+            icon={'volume-up'}
+            onClick={this.handleTTSClick}
+            text={'Text to Speech'}
           />
         </div>
         <div
