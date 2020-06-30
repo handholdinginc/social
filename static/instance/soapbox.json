@@ -9,10 +9,6 @@
     },
     "promoPanel": {
         "items": [{
-            "icon": "film",
-            "text": "Streaming",
-            "url": "https://stream.handholding.io"
-        }, {
             "icon": "comment-o",
             "text": "Lightweight Frontend (Bloat)",
             "url": "https://bloat.handholding.io"
