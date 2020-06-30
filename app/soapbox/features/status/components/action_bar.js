@@ -106,20 +106,21 @@ class ActionBar extends React.PureComponent {
   handleTTSClick = (e) => {
     const { me } = this.props;
     if (me) {
-        var text = "content="+this.props.status.get('search_index');
+        var text = 'content='+this.props.status.get('search_index');
         fetch('http://social.handholding.io/predict', {
             method: 'POST',
             headers: {
-                "Content-Type": "application/x-www-form-urlencoded"
+                'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: text
-        }).then(response => response.text().then( res =>
+            body: text,
+        }).then(response => response.text().then(res =>
                 {
                     var r = JSON.parse(res);
                     var s = r.snd;
-                    var snd = new Audio("data:audio/wav;base64," + s);
+                    var snd = new Audio('data:audio/wav;base64,' + s);
                     snd.play();
-                }));
+                })).catch((error) => {console.error('Error:', error);});
+               
     } else {
       this.props.onOpenUnauthorizedModal();
     }

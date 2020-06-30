@@ -96,7 +96,7 @@ class RegistrationForm extends ImmutablePureComponent {
             <p className='lead'>
               <FormattedMessage
                 id='registration.lead'
-                defaultMessage="With an account on {instance} you will be able to create a free video stream and chat with your friends."
+                defaultMessage='With an account on {instance} you will be able to create a free video stream and chat with your friends.'
                 values={{ instance: <strong>{instance.get('title')}</strong> }}
               />
             </p>
