@@ -5,11 +5,12 @@ import Avatar from '../../../components/avatar';
 import DisplayName from '../../../components/display_name';
 import StatusContent from '../../../components/status_content';
 import MediaGallery from '../../../components/media_gallery';
-import { Link, NavLink } from 'react-router-dom';
-import { FormattedDate, FormattedNumber } from 'react-intl';
+import { NavLink } from 'react-router-dom';
+import { FormattedDate } from 'react-intl';
 import Card from './card';
 import ImmutablePureComponent from 'react-immutable-pure-component';
 import Video from '../../video';
+import Audio from '../../audio';
 import scheduleIdleTask from '../../ui/util/schedule_idle_task';
 import classNames from 'classnames';
 import Icon from 'soapbox/components/icon';
@@ -90,9 +91,7 @@ export default class DetailedStatus extends ImmutablePureComponent {
     }
 
     let media           = '';
-    let applicationLink = '';
-    let reblogLink = '';
-    let reblogIcon = 'retweet';
+    let statusTypeIcon = '';
 
     if (this.props.measureHeight) {
       outerStyle.height = `${this.state.height}px`;
@@ -120,6 +119,19 @@ export default class DetailedStatus extends ImmutablePureComponent {
             onToggleVisibility={this.props.onToggleMediaVisibility}
           />
         );
+      } else if (status.getIn(['media_attachments', 0, 'type']) === 'audio' && status.get('media_attachments').size === 1) {
+        const audio = status.getIn(['media_attachments', 0]);
+
+        media = (
+          <Audio
+            src={audio.get('url')}
+            alt={audio.get('description')}
+            inline
+            sensitive={status.get('sensitive')}
+            visible={this.props.showMedia}
+            onToggleVisibility={this.props.onToggleMediaVisibility}
+          />
+        );
       } else {
         media = (
           <MediaGallery
@@ -137,36 +149,10 @@ export default class DetailedStatus extends ImmutablePureComponent {
       media = <Card onOpenMedia={this.props.onOpenMedia} card={status.get('card', null)} />;
     }
 
-    if (status.get('application')) {
-      applicationLink = <span> · <a className='detailed-status__application' href={status.getIn(['application', 'website'])} target='_blank' rel='noopener'>{status.getIn(['application', 'name'])}</a></span>;
-    }
-
     if (status.get('visibility') === 'direct') {
-      reblogIcon = 'envelope';
+      statusTypeIcon = <Icon id='envelope' />;
     } else if (status.get('visibility') === 'private') {
-      reblogIcon = 'lock';
-    }
-
-    if (status.get('visibility') === 'private') {
-      reblogLink = <Icon id={reblogIcon} />;
-    } else if (this.context.router) {
-      reblogLink = (
-        <Link to={`/@${status.getIn(['account', 'acct'])}/posts/${status.get('id')}/reblogs`} className='detailed-status__link'>
-          <Icon id={reblogIcon} />
-          <span className='detailed-status__reblogs'>
-            <FormattedNumber value={status.get('reblogs_count')} />
-          </span>
-        </Link>
-      );
-    } else {
-      reblogLink = (
-        <a href={`/interact/${status.get('id')}?type=reblog`} className='detailed-status__link' onClick={this.handleModalLink}>
-          <Icon id={reblogIcon} />
-          <span className='detailed-status__reblogs'>
-            <FormattedNumber value={status.get('reblogs_count')} />
-          </span>
-        </a>
-      );
+      statusTypeIcon = <Icon id='lock' />;
     }
 
     return (
@@ -190,7 +176,7 @@ export default class DetailedStatus extends ImmutablePureComponent {
           <div className='detailed-status__meta'>
             <StatusInteractionBar status={status} />
             <div>
-              {reblogLink} {applicationLink} · <a className='detailed-status__datetime' href={status.get('url')} target='_blank' rel='noopener'>
+              {statusTypeIcon}<a className='detailed-status__datetime' href={status.get('url')} target='_blank' rel='noopener'>
                 <FormattedDate value={new Date(status.get('created_at'))} hour12={false} year='numeric' month='short' day='2-digit' hour='2-digit' minute='2-digit' />
               </a>
             </div>

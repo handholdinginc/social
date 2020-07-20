@@ -13,6 +13,7 @@ import { FormattedMessage } from 'react-intl';
 import { fetchAccountIdentityProofs } from '../../actions/identity_proofs';
 import MissingIndicator from 'soapbox/components/missing_indicator';
 import { NavLink } from 'react-router-dom';
+import { fetchPatronAccount } from '../../actions/patron';
 
 const emptyList = ImmutableList();
 
@@ -23,12 +24,14 @@ const mapStateToProps = (state, { params: { username }, withReplies = false }) =
 
   let accountId = -1;
   let accountUsername = username;
+  let accountApId = null;
   if (accountFetchError) {
     accountId = null;
   } else {
     let account = accounts.find(acct => username.toLowerCase() === acct.getIn(['acct'], '').toLowerCase());
     accountId = account ? account.getIn(['id'], null) : -1;
     accountUsername = account ? account.getIn(['acct'], '') : '';
+    accountApId = account ? account.get('url') : '';
   }
 
   const path = withReplies ? `${accountId}:with_replies` : accountId;
@@ -40,12 +43,14 @@ const mapStateToProps = (state, { params: { username }, withReplies = false }) =
     accountId,
     unavailable,
     accountUsername,
+    accountApId,
     isAccount: !!state.getIn(['accounts', accountId]),
     statusIds: state.getIn(['timelines', `account:${path}`, 'items'], emptyList),
     featuredStatusIds: withReplies ? ImmutableList() : state.getIn(['timelines', `account:${accountId}:pinned`, 'items'], emptyList),
     isLoading: state.getIn(['timelines', `account:${path}`, 'isLoading']),
     hasMore: state.getIn(['timelines', `account:${path}`, 'hasMore']),
     me,
+    patronEnabled: state.getIn(['soapbox', 'extensions', 'patron', 'enabled']),
   };
 };
 
@@ -65,7 +70,7 @@ class AccountTimeline extends ImmutablePureComponent {
   };
 
   componentDidMount() {
-    const { params: { username }, accountId, withReplies, me } = this.props;
+    const { params: { username }, accountId, accountApId, withReplies, me, patronEnabled } = this.props;
 
     if (accountId && accountId !== -1) {
       this.props.dispatch(fetchAccount(accountId));
@@ -75,23 +80,31 @@ class AccountTimeline extends ImmutablePureComponent {
         this.props.dispatch(expandAccountFeaturedTimeline(accountId));
       }
 
+      if (patronEnabled && accountApId) {
+        this.props.dispatch(fetchPatronAccount(accountApId));
+      }
+
       this.props.dispatch(expandAccountTimeline(accountId, { withReplies }));
     } else {
       this.props.dispatch(fetchAccountByUsername(username));
     }
   }
 
-  componentDidUpdate(nextProps) {
-    const { me } = nextProps;
-    if (nextProps.accountId && nextProps.accountId !== -1 && (nextProps.accountId !== this.props.accountId && nextProps.accountId) || nextProps.withReplies !== this.props.withReplies) {
-      this.props.dispatch(fetchAccount(nextProps.accountId));
-      if (me) this.props.dispatch(fetchAccountIdentityProofs(nextProps.accountId));
+  componentDidUpdate(prevProps) {
+    const { me, accountId, withReplies, accountApId, patronEnabled } = this.props;
+    if (accountId && accountId !== -1 && (accountId !== prevProps.accountId && accountId) || withReplies !== prevProps.withReplies) {
+      this.props.dispatch(fetchAccount(accountId));
+      if (me) this.props.dispatch(fetchAccountIdentityProofs(accountId));
 
-      if (!nextProps.withReplies) {
-        this.props.dispatch(expandAccountFeaturedTimeline(nextProps.accountId));
+      if (!withReplies) {
+        this.props.dispatch(expandAccountFeaturedTimeline(accountId));
       }
 
-      this.props.dispatch(expandAccountTimeline(nextProps.accountId, { withReplies: nextProps.withReplies }));
+      if (patronEnabled && accountApId) {
+        this.props.dispatch(fetchPatronAccount(accountApId));
+      }
+
+      this.props.dispatch(expandAccountTimeline(accountId, { withReplies }));
     }
   }
 

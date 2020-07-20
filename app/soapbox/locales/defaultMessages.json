@@ -867,6 +867,56 @@
   {
     "descriptors": [
       {
+        "defaultMessage": "Play",
+        "id": "audio.play"
+      },
+      {
+        "defaultMessage": "Pause",
+        "id": "audio.pause"
+      },
+      {
+        "defaultMessage": "Mute",
+        "id": "audio.mute"
+      },
+      {
+        "defaultMessage": "Unmute",
+        "id": "audio.unmute"
+      },
+      {
+        "defaultMessage": "Hide audio",
+        "id": "audio.hide"
+      },
+      {
+        "defaultMessage": "Expand audio",
+        "id": "audio.expand"
+      },
+      {
+        "defaultMessage": "Close audio",
+        "id": "audio.close"
+      },
+      {
+        "defaultMessage": "Sensitive content",
+        "id": "status.sensitive_warning"
+      },
+      {
+        "defaultMessage": "Media hidden",
+        "id": "status.media_hidden"
+      }
+    ],
+    "path": "app/soapbox/features/audio/index.json"
+  },
+  {
+    "descriptors": [
+      {
+        "defaultMessage": "Click the image to get a new captcha",
+        "id": "registration.captcha.hint"
+      }
+    ],
+    "path": "app/soapbox/features/auth_login/components/captcha.json"
+  },
+  {
+    "descriptors": [
+      {
         "defaultMessage": "Username",
         "id": "login.fields.username_placeholder"
       },
@@ -1110,6 +1160,10 @@
       {
         "defaultMessage": "{number, plural, one {# day} other {# days}}",
         "id": "intervals.full.days"
+      },
+      {
+        "defaultMessage": "Click to toggle poll type. Radio button (default) is single. Checkbox is multiple.",
+        "id": "compose_form.poll.type.hint"
       }
     ],
     "path": "app/soapbox/features/compose/components/poll_form.json"
@@ -1217,7 +1271,7 @@
   {
     "descriptors": [
       {
-        "defaultMessage": "Add media (JPEG, PNG, GIF, WebM, MP4, MOV)",
+        "defaultMessage": "Add media attachment",
         "id": "upload_button.label"
       }
     ],
@@ -2159,18 +2213,6 @@
         "id": "column.preferences"
       },
       {
-        "defaultMessage": "Light",
-        "id": "preferences.options.theme_light"
-      },
-      {
-        "defaultMessage": "Dark",
-        "id": "preferences.options.theme_dark"
-      },
-      {
-        "defaultMessage": "Theme",
-        "id": "preferences.fields.theme_label"
-      },
-      {
         "defaultMessage": "Language",
         "id": "preferences.fields.language_label"
       },
@@ -2878,6 +2920,14 @@
       {
         "defaultMessage": "Post",
         "id": "tabs_bar.post"
+      },
+      {
+        "defaultMessage": "Switch to light theme",
+        "id": "tabs_bar.theme_toggle_light"
+      },
+      {
+        "defaultMessage": "Switch to dark theme",
+        "id": "tabs_bar.theme_toggle_dark"
       },
       {
         "defaultMessage": "Home",

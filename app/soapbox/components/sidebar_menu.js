@@ -15,6 +15,7 @@ import { shortNumberFormat } from '../utils/numbers';
 import { isStaff } from '../utils/accounts';
 import { makeGetAccount } from '../selectors';
 import { logOut } from 'soapbox/actions/auth';
+import ThemeToggle from '../features/ui/components/theme_toggle';
 
 const messages = defineMessages({
   followers: { id: 'account.followers', defaultMessage: 'Followers' },
@@ -43,7 +44,7 @@ const mapStateToProps = state => {
   return {
     account: getAccount(state, me),
     sidebarOpen: state.get('sidebar').sidebarOpen,
-    hasPatron: state.getIn(['soapbox', 'extensions', 'patron']),
+    donateUrl: state.getIn(['patron', 'instance', 'url']),
     isStaff: isStaff(state.getIn(['accounts', me])),
   };
 };
@@ -75,7 +76,7 @@ class SidebarMenu extends ImmutablePureComponent {
   }
 
   render() {
-    const { sidebarOpen, onClose, intl, account, onClickLogOut, hasPatron, isStaff } = this.props;
+    const { sidebarOpen, onClose, intl, account, onClickLogOut, donateUrl, isStaff } = this.props;
     if (!account) return null;
     const acct = account.get('acct');
 
@@ -119,6 +120,12 @@ class SidebarMenu extends ImmutablePureComponent {
             </div>
 
             <div className='sidebar-menu__section sidebar-menu__section--borderless'>
+              <div className='sidebar-menu-item theme-toggle'>
+                <ThemeToggle showLabel />
+              </div>
+            </div>
+
+            <div className='sidebar-menu__section sidebar-menu__section'>
               <NavLink className='sidebar-menu-item' to={`/@${acct}`} onClick={onClose}>
                 <Icon id='user' />
                 <span className='sidebar-menu-item__title'>{intl.formatMessage(messages.profile)}</span>
@@ -127,11 +134,11 @@ class SidebarMenu extends ImmutablePureComponent {
                 <Icon id='envelope' />
                 <span className='sidebar-menu-item__title'>{intl.formatMessage(messages.messages)}</span>
               </NavLink>
-              {hasPatron ?
-                <NavLink className='sidebar-menu-item' to='/donate' onClick={onClose}>
+              {donateUrl ?
+                <a className='sidebar-menu-item' href={donateUrl} onClick={onClose}>
                   <Icon id='dollar' />
                   <span className='sidebar-menu-item__title'>{intl.formatMessage(messages.donate)}</span>
-                </NavLink>
+                </a>
                 : ''}
               <NavLink className='sidebar-menu-item' to='/lists' onClick={onClose}>
                 <Icon id='list' />

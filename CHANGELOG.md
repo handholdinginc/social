@@ -5,10 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Audio player for audio uploads.
+- Integration with Patron recurring donations platform.
 
 ## [Unreleased patch]
 ### Fixed
 - Composer: Forcing the scope to default after settings save.
+
+### Removed
+- Removed the app name on statuses.
 
 ## [1.0.0] - 2020-06-15
 ### Added

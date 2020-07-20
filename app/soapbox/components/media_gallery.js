@@ -11,6 +11,7 @@ import { decode } from 'blurhash';
 import { isPanoramic, isPortrait, isNonConformingRatio, minimumAspectRatio, maximumAspectRatio } from '../utils/media_aspect_ratio';
 import { Map as ImmutableMap } from 'immutable';
 import { getSettings } from 'soapbox/actions/settings';
+import Icon from 'soapbox/components/icon';
 import StillImage from 'soapbox/components/still_image';
 
 const messages = defineMessages({
@@ -192,6 +193,24 @@ class Item extends React.PureComponent {
           <span className='media-gallery__gifv__label'>GIF</span>
         </div>
       );
+    } else if (attachment.get('type') === 'audio') {
+      const remoteURL = attachment.get('remote_url');
+      const originalUrl = attachment.get('url');
+      const fileExtensionLastIndex = remoteURL.lastIndexOf('.');
+      const fileExtension = remoteURL.substr(fileExtensionLastIndex + 1).toUpperCase();
+      thumbnail = (
+        <a
+          className={classNames('media-gallery__item-thumbnail')}
+          href={attachment.get('remote_url') || originalUrl}
+          onClick={this.handleClick}
+          target='_blank'
+          alt={attachment.get('description')}
+          title={attachment.get('description')}
+        >
+          <span className='media-gallery__item__icons'><Icon id='volume-up' /></span>
+          <span className='media-gallery__file-extension__label'>{fileExtension}</span>
+        </a>
+      );
     }
 
     return (
@@ -234,21 +253,15 @@ class MediaGallery extends React.PureComponent {
   state = {
     visible: this.props.visible !== undefined ? this.props.visible : (this.props.displayMedia !== 'hide_all' && !this.props.sensitive || this.props.displayMedia === 'show_all'),
     width: this.props.defaultWidth,
-    media: this.props.media,
-    displayMedia: this.props.displayMedia,
   };
 
-  static getDerivedStateFromProps(nextProps, state) {
-    if (!is(nextProps.media, state.media) && nextProps.visible === undefined) {
-      return {
-        visible: state.displayMedia !== 'hide_all' && !nextProps.sensitive || state.displayMedia === 'show_all',
-      };
-    } else if (!is(nextProps.visible, state.visible) && nextProps.visible !== undefined) {
-      return {
-        visible: nextProps.visible,
-      };
+  componentDidUpdate(prevProps) {
+    const { media, visible, sensitive } = this.props;
+    if (!is(media, prevProps.media) && visible === undefined) {
+      this.setState({ visible: prevProps.displayMedia !== 'hide_all' && !sensitive || prevProps.displayMedia === 'show_all' });
+    } else if (!is(visible, prevProps.visible) && visible !== undefined) {
+      this.setState({ visible });
     }
-    return null;
   }
 
   handleOpen = () => {
