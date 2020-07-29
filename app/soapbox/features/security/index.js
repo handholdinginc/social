@@ -16,8 +16,19 @@ import {
   changePassword,
   fetchOAuthTokens,
   revokeOAuthToken,
+  deleteAccount,
 } from 'soapbox/actions/auth';
 import { showAlert } from 'soapbox/actions/alerts';
+
+/*
+Security settings page for user account
+Routed to /auth/edit
+Includes following features:
+- Change Email
+- Change Password
+- Sessions
+- Deactivate Account
+*/
 
 const messages = defineMessages({
   heading: { id: 'column.security', defaultMessage: 'Security' },
@@ -35,6 +46,11 @@ const messages = defineMessages({
   emailHeader: { id: 'security.headers.update_email', defaultMessage: 'Change Email' },
   passwordHeader: { id: 'security.headers.update_password', defaultMessage: 'Change Password' },
   tokenHeader: { id: 'security.headers.tokens', defaultMessage: 'Sessions' },
+  deleteHeader: { id: 'security.headers.delete', defaultMessage: 'Delete Account' },
+  deleteText: { id: 'security.text.delete', defaultMessage: 'To delete your account, enter your password then click Delete Account. This is a permanent action that cannot be undone. Your account will be destroyed from this server, and a deletion request will be sent to other servers. It\'s not guaranteed that all servers will purge your account.' },
+  deleteSubmit: { id: 'security.submit.delete', defaultMessage: 'Delete Account' },
+  deleteAccountSuccess: { id: 'security.delete_account.success', defaultMessage: 'Account successfully deleted.' },
+  deleteAccountFail: { id: 'security.delete_account.fail', defaultMessage: 'Account deletion failed.' },
 });
 
 export default @injectIntl
@@ -53,6 +69,7 @@ class SecurityForm extends ImmutablePureComponent {
         <ChangeEmailForm />
         <ChangePasswordForm />
         <AuthTokenList />
+        <DeactivateAccount />
       </Column>
     );
   }
@@ -263,6 +280,70 @@ class AuthTokenList extends ImmutablePureComponent {
             </div>
           ))}
         </div>
+      </SimpleForm>
+    );
+  }
+
+}
+
+@connect(mapStateToProps)
+@injectIntl
+class DeactivateAccount extends ImmutablePureComponent {
+
+  static propTypes = {
+    dispatch: PropTypes.func.isRequired,
+    intl: PropTypes.object.isRequired,
+  };
+
+  state = {
+    password: '',
+    isLoading: false,
+  }
+
+  handleInputChange = e => {
+    this.setState({ [e.target.name]: e.target.value });
+  }
+
+  handleSubmit = e => {
+    const { password } = this.state;
+    const { dispatch, intl } = this.props;
+    this.setState({ isLoading: true });
+    return dispatch(deleteAccount(password)).then(() => {
+      //this.setState({ email: '', password: '' }); // TODO: Maybe redirect user
+      dispatch(showAlert('', intl.formatMessage(messages.deleteAccountSuccess)));
+    }).catch(error => {
+      this.setState({ password: '' });
+      dispatch(showAlert('', intl.formatMessage(messages.deleteAccountFail)));
+    }).then(() => {
+      this.setState({ isLoading: false });
+    });
+  }
+
+  render() {
+    const { intl } = this.props;
+
+    return (
+      <SimpleForm onSubmit={this.handleSubmit}>
+        <h2>{intl.formatMessage(messages.deleteHeader)}</h2>
+        <p className='hint'>
+          {intl.formatMessage(messages.deleteText)}
+        </p>
+        <fieldset disabled={this.state.isLoading}>
+          <FieldsGroup>
+            <SimpleInput
+              type='password'
+              label={intl.formatMessage(messages.passwordFieldLabel)}
+              name='password'
+              onChange={this.handleInputChange}
+              value={this.state.password}
+            />
+            <div className='actions'>
+              <button name='button' type='submit' className='btn button button-primary'>
+                {intl.formatMessage(messages.deleteSubmit)}
+              </button>
+            </div>
+          </FieldsGroup>
+        </fieldset>
       </SimpleForm>
     );
   }

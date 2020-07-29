@@ -19,6 +19,10 @@ export const CHANGE_EMAIL_REQUEST = 'CHANGE_EMAIL_REQUEST';
 export const CHANGE_EMAIL_SUCCESS = 'CHANGE_EMAIL_SUCCESS';
 export const CHANGE_EMAIL_FAIL    = 'CHANGE_EMAIL_FAIL';
 
+export const DELETE_ACCOUNT_REQUEST = 'DELETE_ACCOUNT_REQUEST';
+export const DELETE_ACCOUNT_SUCCESS = 'DELETE_ACCOUNT_SUCCESS';
+export const DELETE_ACCOUNT_FAIL    = 'DELETE_ACCOUNT_FAIL';
+
 export const CHANGE_PASSWORD_REQUEST = 'CHANGE_PASSWORD_REQUEST';
 export const CHANGE_PASSWORD_SUCCESS = 'CHANGE_PASSWORD_SUCCESS';
 export const CHANGE_PASSWORD_FAIL    = 'CHANGE_PASSWORD_FAIL';
@@ -178,6 +182,23 @@ export function changeEmail(email, password) {
       dispatch({ type: CHANGE_EMAIL_SUCCESS, email, response });
     }).catch(error => {
       dispatch({ type: CHANGE_EMAIL_FAIL, email, error, skipAlert: true });
+      throw error;
+    });
+  };
+}
+
+export function deleteAccount(password) {
+  return (dispatch, getState) => {
+    dispatch({ type: DELETE_ACCOUNT_REQUEST });
+    return api(getState).post('/api/pleroma/delete_account', {
+      password,
+    }).then(response => {
+      if (response.data.error) throw response.data.error; // This endpoint returns HTTP 200 even on failure
+      dispatch({ type: DELETE_ACCOUNT_SUCCESS, response });
+      dispatch({ type: AUTH_LOGGED_OUT });
+      dispatch(showAlert('Successfully logged out.', ''));
+    }).catch(error => {
+      dispatch({ type: DELETE_ACCOUNT_FAIL, error, skipAlert: true });
       throw error;
     });
   };
