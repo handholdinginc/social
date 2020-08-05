@@ -18,6 +18,9 @@ import classNames from 'classnames';
 import Icon from 'soapbox/components/icon';
 import PollContainer from 'soapbox/containers/poll_container';
 import { NavLink } from 'react-router-dom';
+import ProfileHoverCardContainer from '../features/profile_hover_card/profile_hover_card_container';
+import { isMobile } from '../../../app/soapbox/is_mobile';
+import { debounce } from 'lodash';
 
 // We use the component (and not the container) since we do not want
 // to use the progress bar to show download progress
@@ -104,6 +107,7 @@ class Status extends ImmutablePureComponent {
   state = {
     showMedia: defaultMediaVisibility(this.props.status, this.props.displayMedia),
     statusId: undefined,
+    profileCardVisible: false,
   };
 
   // Track height changes we know about to compensate scrolling
@@ -247,6 +251,19 @@ class Status extends ImmutablePureComponent {
 
   handleHotkeyToggleSensitive = () => {
     this.handleToggleMediaVisibility();
+  }
+
+  showProfileCard = debounce(() => {
+    this.setState({ profileCardVisible: true });
+  }, 1200);
+
+  handleProfileHover = e => {
+    if (!isMobile(window.innerWidth)) this.showProfileCard();
+  }
+
+  handleProfileLeave = e => {
+    this.showProfileCard.cancel();
+    this.setState({ profileCardVisible: false });
   }
 
   _properStatus() {
@@ -437,6 +454,7 @@ class Status extends ImmutablePureComponent {
     };
 
     const statusUrl = `/@${status.getIn(['account', 'acct'])}/posts/${status.get('id')}`;
+    const { profileCardVisible } = this.state;
 
     return (
       <HotKeys handlers={handlers}>
@@ -450,13 +468,16 @@ class Status extends ImmutablePureComponent {
                 <RelativeTimestamp timestamp={status.get('created_at')} />
               </NavLink>
 
-              <NavLink to={`/@${status.getIn(['account', 'acct'])}`} title={status.getIn(['account', 'acct'])} className='status__display-name'>
+              <div className='status__profile' onMouseEnter={this.handleProfileHover} onMouseLeave={this.handleProfileLeave}>
                 <div className='status__avatar'>
+                  <NavLink to={`/@${status.getIn(['account', 'acct'])}`} title={status.getIn(['account', 'acct'])} className='floating-link' />
                   {statusAvatar}
                 </div>
-
-                <DisplayName account={status.get('account')} others={otherAccounts} />
-              </NavLink>
+                <NavLink to={`/@${status.getIn(['account', 'acct'])}`} title={status.getIn(['account', 'acct'])} className='status__display-name'>
+                  <DisplayName account={status.get('account')} others={otherAccounts} />
+                </NavLink>
+                <ProfileHoverCardContainer accountId={status.getIn(['account', 'id'])} visible={!isMobile(window.innerWidth) && profileCardVisible} />
+              </div>
             </div>
 
             {!group && status.get('group') && (
