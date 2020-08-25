@@ -6,6 +6,7 @@ import { FormattedMessage, injectIntl, defineMessages } from 'react-intl';
 import { connect } from 'react-redux';
 import classNames from 'classnames';
 import NotificationsCounterIcon from './notifications_counter_icon';
+import ReportsCounterIcon from './reports_counter_icon';
 import SearchContainer from 'soapbox/features/compose/containers/search_container';
 import Avatar from '../../../components/avatar';
 import ActionBar from 'soapbox/features/compose/components/action_bar';
@@ -13,6 +14,8 @@ import { openModal } from '../../../actions/modal';
 import { openSidebar } from '../../../actions/sidebar';
 import Icon from '../../../components/icon';
 import ThemeToggle from '../../ui/components/theme_toggle';
+import { getSoapboxConfig } from 'soapbox/actions/soapbox';
+import { isStaff } from 'soapbox/utils/accounts';
 
 const messages = defineMessages({
   post: { id: 'tabs_bar.post', defaultMessage: 'Post' },
@@ -64,6 +67,14 @@ class TabsBar extends React.PureComponent {
           <NotificationsCounterIcon />
           <span><FormattedMessage id='tabs_bar.notifications' defaultMessage='Notifications' /></span>
         </NavLink>);
+    }
+    if (account && isStaff(account)) {
+      links.push(
+        <a key='reports' className='tabs-bar__link' href='/pleroma/admin/#/reports/index' target='_blank' data-preview-title-id='tabs_bar.reports'>
+          <Icon id='gavel' />
+          <ReportsCounterIcon />
+          <span><FormattedMessage id='tabs_bar.reports' defaultMessage='Reports' /></span>
+        </a>);
     }
     links.push(
       <a key='stream' className='tabs-bar__link' exact href='https://stream.handholding.io/list' data-preview-title-id='column.stream'>
@@ -138,7 +149,7 @@ const mapStateToProps = state => {
   const me = state.get('me');
   return {
     account: state.getIn(['accounts', me]),
-    logo: state.getIn(['soapbox', 'logo']),
+    logo: getSoapboxConfig(state).get('logo'),
   };
 };
 

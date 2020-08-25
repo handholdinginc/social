@@ -16,6 +16,7 @@ import { debounce } from 'lodash';
 import { uploadCompose, resetCompose } from '../../actions/compose';
 import { expandHomeTimeline } from '../../actions/timelines';
 import { expandNotifications } from '../../actions/notifications';
+import { fetchReports } from '../../actions/admin';
 import { fetchFilters } from '../../actions/filters';
 import { clearHeight } from '../../actions/height_cache';
 import { openModal } from '../../actions/modal';
@@ -34,6 +35,7 @@ import SidebarMenu from '../../components/sidebar_menu';
 import { connectUserStream } from '../../actions/streaming';
 import { Redirect } from 'react-router-dom';
 import Icon from 'soapbox/components/icon';
+import { isStaff } from 'soapbox/utils/accounts';
 
 import {
   Status,
@@ -72,6 +74,7 @@ import {
   LoginPage,
   Preferences,
   EditProfile,
+  SoapboxConfig,
   PasswordReset,
   SecurityForm,
   MfaForm,
@@ -88,7 +91,7 @@ const messages = defineMessages({
 
 const mapStateToProps = state => {
   const me = state.get('me');
-  const meUsername = state.getIn(['accounts', me, 'username']);
+  const account = state.getIn(['accounts', me]);
 
   return {
     isComposing: state.getIn(['compose', 'is_composing']),
@@ -98,7 +101,7 @@ const mapStateToProps = state => {
     accessToken: state.getIn(['auth', 'user', 'access_token']),
     streamingUrl: state.getIn(['instance', 'urls', 'streaming_api']),
     me,
-    meUsername,
+    account,
   };
 };
 
@@ -254,6 +257,7 @@ class SwitchingColumnsArea extends React.PureComponent {
         <Redirect exact from='/settings' to='/settings/preferences' />
         <WrappedRoute path='/settings/preferences' layout={LAYOUT.DEFAULT} component={Preferences} content={children} />
         <WrappedRoute path='/settings/profile' layout={LAYOUT.DEFAULT} component={EditProfile} content={children} />
+        <WrappedRoute path='/soapbox/config' layout={LAYOUT.DEFAULT} component={SoapboxConfig} content={children} />
 
         <WrappedRoute layout={LAYOUT.EMPTY} component={GenericNotFound} content={children} />
       </Switch>
@@ -282,7 +286,7 @@ class UI extends React.PureComponent {
     dropdownMenuIsOpen: PropTypes.bool,
     me: SoapboxPropTypes.me,
     streamingUrl: PropTypes.string,
-    meUsername: PropTypes.string,
+    account: PropTypes.object,
   };
 
   state = {
@@ -396,8 +400,8 @@ class UI extends React.PureComponent {
   }
 
   componentDidMount() {
-    const { me } = this.props;
-    if (!me) return;
+    const { account } = this.props;
+    if (!account) return;
     window.addEventListener('beforeunload', this.handleBeforeUnload, false);
 
     document.addEventListener('dragenter', this.handleDragEnter, false);
@@ -414,10 +418,12 @@ class UI extends React.PureComponent {
       window.setTimeout(() => Notification.requestPermission(), 120 * 1000);
     }
 
-    if (me) {
+    if (account) {
       this.props.dispatch(expandHomeTimeline());
       this.props.dispatch(expandNotifications());
       // this.props.dispatch(fetchGroups('member'));
+      if (isStaff(account))
+        this.props.dispatch(fetchReports({ state: 'open' }));
 
       setTimeout(() => this.props.dispatch(fetchFilters()), 500);
     }
@@ -520,18 +526,24 @@ class UI extends React.PureComponent {
   }
 
   handleHotkeyGoToFavourites = () => {
-    const { meUsername } = this.props;
-    this.context.router.history.push(`/${meUsername}/favorites`);
+    const { account } = this.props;
+    if (!account) return;
+
+    this.context.router.history.push(`/${account.get('username')}/favorites`);
   }
 
   handleHotkeyGoToPinned = () => {
-    const { meUsername } = this.props;
-    this.context.router.history.push(`/${meUsername}/pins`);
+    const { account } = this.props;
+    if (!account) return;
+
+    this.context.router.history.push(`/${account.get('username')}/pins`);
   }
 
   handleHotkeyGoToProfile = () => {
-    const { meUsername } = this.props;
-    this.context.router.history.push(`/${meUsername}`);
+    const { account } = this.props;
+    if (!account) return;
+
+    this.context.router.history.push(`/${account.get('username')}`);
   }
 
   handleHotkeyGoToBlocked = () => {
