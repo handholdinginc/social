@@ -21,6 +21,7 @@ import { NavLink } from 'react-router-dom';
 import ProfileHoverCardContainer from '../features/profile_hover_card/profile_hover_card_container';
 import { isMobile } from '../../../app/soapbox/is_mobile';
 import { debounce } from 'lodash';
+import { getDomain } from 'soapbox/utils/accounts';
 
 // We use the component (and not the container) since we do not want
 // to use the progress bar to show download progress
@@ -455,6 +456,8 @@ class Status extends ImmutablePureComponent {
 
     const statusUrl = `/@${status.getIn(['account', 'acct'])}/posts/${status.get('id')}`;
     const { profileCardVisible } = this.state;
+    const favicon = status.getIn(['account', 'pleroma', 'favicon']);
+    const domain = getDomain(status.get('account'));
 
     return (
       <HotKeys handlers={handlers}>
@@ -467,6 +470,11 @@ class Status extends ImmutablePureComponent {
               <NavLink to={statusUrl} className='status__relative-time'>
                 <RelativeTimestamp timestamp={status.get('created_at')} />
               </NavLink>
+
+              {favicon &&
+                <div className='status__favicon'>
+                  <img src={favicon} alt='' title={domain} />
+                </div>}
 
               <div className='status__profile' onMouseEnter={this.handleProfileHover} onMouseLeave={this.handleProfileLeave}>
                 <div className='status__avatar'>

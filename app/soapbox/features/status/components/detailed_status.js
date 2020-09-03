@@ -19,6 +19,7 @@ import { StatusInteractionBar } from './status_interaction_bar';
 import ProfileHoverCardContainer from 'soapbox/features/profile_hover_card/profile_hover_card_container';
 import { isMobile } from 'soapbox/is_mobile';
 import { debounce } from 'lodash';
+import { getDomain } from 'soapbox/utils/accounts';
 
 export default class DetailedStatus extends ImmutablePureComponent {
 
@@ -103,6 +104,8 @@ export default class DetailedStatus extends ImmutablePureComponent {
     const outerStyle = { boxSizing: 'border-box' };
     const { compact } = this.props;
     const { profileCardVisible } = this.state;
+    const favicon = status.getIn(['account', 'pleroma', 'favicon']);
+    const domain = getDomain(status.get('account'));
 
     if (!status) {
       return null;
@@ -208,6 +211,11 @@ export default class DetailedStatus extends ImmutablePureComponent {
           <div className='detailed-status__meta'>
             <StatusInteractionBar status={status} />
             <div>
+              {favicon &&
+                <div className='status__favicon'>
+                  <img src={favicon} alt='' title={domain} />
+                </div>}
+
               {statusTypeIcon}<a className='detailed-status__datetime' href={status.get('url')} target='_blank' rel='noopener'>
                 <FormattedDate value={new Date(status.get('created_at'))} hour12={false} year='numeric' month='short' day='2-digit' hour='2-digit' minute='2-digit' />
               </a>
