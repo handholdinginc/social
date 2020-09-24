@@ -1,6 +1,6 @@
 # Handholding Social
 
-![Soapbox FE Screenshot](soapbox-screenshot.png)
+![Handholding Social Screenshot](handholding-social-screenshot.png)
 
 **Handholding Social** is a frontend for Pleroma with a focus on custom branding and ease of use. 
 
