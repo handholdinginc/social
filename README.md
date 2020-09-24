@@ -65,7 +65,7 @@ All configuration is optional, except `NODE_ENV`.
 The Node environment.
 Handholding Social checks for the following options:
 
-- `development` - What you should use while developing Soapbox FE.
+- `development` - What you should use while developing.
 - `production` - Use when compiling to deploy to a live server.
 - `test` - Use when running automated tests.
 
