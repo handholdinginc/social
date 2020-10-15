@@ -22,10 +22,6 @@ jobs:
       env:
         NODE_ENV: production
         CI: true
-    - run: yarn test
-      env:
-        NODE_ENV: test
-        CI: true
     - name: rsync deploy
       uses: burnett01/rsync-deployments@4.1
       with:
