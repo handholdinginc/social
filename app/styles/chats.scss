@@ -4,9 +4,9 @@
   position: fixed;
   bottom: 0;
   right: 20px;
-  width: 350px;
-  height: 450px;
-  max-height: calc(100vh - 50px);
+  width: 265px;
+  height: 350px;
+  max-height: calc(100vh - 70px);
   display: flex;
   flex-direction: column;
   z-index: 999;
@@ -88,6 +88,8 @@
     overflow: hidden;
 
     .chat-box {
+      width: 350px;
+      height: 450px;
       display: flex;
       flex: 1;
       flex-direction: column;
