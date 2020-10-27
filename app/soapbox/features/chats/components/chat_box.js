@@ -195,7 +195,7 @@ class ChatBox extends ImmutablePureComponent {
         <div className='chat-box__actions simple_form'>
           {this.renderActionButton()}
           <textarea
-            rows={1}
+            rows={2}
             placeholder={intl.formatMessage(messages.placeholder)}
             onKeyDown={this.handleKeyDown}
             onChange={this.handleContentChange}
