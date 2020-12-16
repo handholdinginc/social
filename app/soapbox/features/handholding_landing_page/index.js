@@ -157,9 +157,9 @@ Stream your content to your audience, using your own custom emoji and a secure s
 		</div>
             </section>
 
-            <link href="instance/css/style.css" rel="stylesheet" />
-            <link href="instance/css/bootstrap.min.css" rel="stylesheet" />
-            <link href="instance/css/jquery.fancybox.min.css" rel="stylesheet" />
+            <link href="instance/style.css" rel="stylesheet" />
+            <link href="instance/bootstrap.min.css" rel="stylesheet" />
+            <link href="instance/jquery.fancybox.min.css" rel="stylesheet" />
 
             </div>
         );
