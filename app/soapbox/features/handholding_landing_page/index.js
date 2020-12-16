@@ -62,7 +62,7 @@ class HandholdingLandingPage extends ImmutablePureComponent {
 		    <div className="container px-xl-0">
 			<div className="row justify-content-center">
 			    <div className="col-xl-8 col-lg-10">
-				<h2 className="small" data-aos="fade-down" data-aos-delay="0">
+				<h2 className="small color-main" data-aos="fade-down" data-aos-delay="0">
 				    Your Personal Stream
 				</h2>
 				<div className="mt-35 mb-65 f-22 color-heading text-adaptive description" data-aos="fade-down" data-aos-delay="250">
@@ -78,7 +78,7 @@ Stream your content to your audience, using your own custom emoji and a secure s
 		<div className="container px-xl-0">
 		    <div className="row justify-content-center text-center">
 			<div className="col-xl-8 col-lg-10">
-			    <h2 className="col-lg-11 color-main" data-aos="fade-down" data-aos-delay="0">
+			    <h2 className="color-main f-32" data-aos="fade-down" data-aos-delay="0">
 				Powerful content curation at your fingertips
 			    </h2>
 			    <div className="mt-35 mb-65 f-22 color-heading text-adaptive description" data-aos="fade-down" data-aos-delay="250">
@@ -122,7 +122,7 @@ Stream your content to your audience, using your own custom emoji and a secure s
 
 
 			<div className="col-md-7 col-xl-6">
-			    <h2 className="col-lg-11 color-main" data-aos="fade-down" data-aos-delay="0">
+			    <h2 className="col-lg-11 color-main f-22" data-aos="fade-down" data-aos-delay="0">
 				Secure Chat
 			    </h2>
 			    <div className="mt-25 col-lg-9 color-heading f-18 text-adaptive" data-aos="fade-down" data-aos-delay="0">
@@ -146,7 +146,7 @@ Stream your content to your audience, using your own custom emoji and a secure s
 			</div>
 
 			<div className="col-md-7 col-xl-6">
-			    <h2 className="col-lg-11 color-main" data-aos="fade-down" data-aos-delay="0">
+			    <h2 className="col-lg-11 color-main f-22" data-aos="fade-down" data-aos-delay="0">
 				Ad-Free
 			    </h2>
 			    <div className="mt-25 col-lg-9 color-heading f-18 text-adaptive" data-aos="fade-down" data-aos-delay="0">
