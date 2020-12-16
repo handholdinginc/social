@@ -89,7 +89,7 @@ Stream your content to your audience, using your own custom emoji and a secure s
 
 		    <div className="row justify-content-center justify-content-md-between align-items-center">
 			<div className="mb-15 mb-md-0 col-12 col-md-5 col-xl-6 d-flex justify-content-center">
-			    <img src="instance/hhs-filters.png" alt="" className="img-fluid application_2_left_img" data-aos="fade-down" data-aos-delay="500"/>
+			    <img src="instance/hhs-filters.png" alt="" className="img-fluid application_2_left_img hshadow" data-aos="fade-down" data-aos-delay="500"/>
 			</div>
 			<div className="col-md-7 col-xl-6">
 			    <h2 className="col-lg-11 color-main" data-aos="fade-down" data-aos-delay="0">
@@ -131,7 +131,7 @@ Stream your content to your audience, using your own custom emoji and a secure s
 			</div>
 
 			<div className="mb-15 mb-md-0 col-12 col-md-5 col-xl-6 d-flex justify-content-center">
-			    <img src="instance/hhs-chats.png" alt="" className="img-fluid application_2_left_img" data-aos="fade-down" data-aos-delay="500"/>
+			    <img src="instance/hhs-chats.png" alt="" className="img-fluid application_2_left_img hshadow" data-aos="fade-down" data-aos-delay="500"/>
 			</div>
 
 		    </div>
