@@ -5,15 +5,10 @@ import { Link } from 'react-router-dom';
 import RegistrationForm from './components/registration_form';
 import SiteBanner from '../public_layout/components/site_banner';
 
-import "./css/style.css";
-import './js/script.js';
+
+import './script.js';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
-
-import "./css/bootstrap.min.css";
-import "./css/jquery.fancybox.min.css";
-
-
 
 const mapStateToProps = (state, props) => ({
     instance: state.get('instance'),
@@ -161,6 +156,10 @@ Stream your content to your audience, using your own custom emoji and a secure s
 		    </div>
 		</div>
             </section>
+
+            <link href="instance/css/style.css" rel="stylesheet" />
+            <link href="instance/css/bootstrap.min.css" rel="stylesheet" />
+            <link href="instance/css/jquery.fancybox.min.css" rel="stylesheet" />
 
             </div>
         );
