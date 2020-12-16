@@ -548,7 +548,6 @@ select {
   text-indent: 0.01px;
   text-overflow: "";
   background-color: transparent;
-  background-image: url(../i/fa-angle-down-dark.png);
   background-repeat: no-repeat;
   background-position: 90% 50%;
   background-position: calc(100% - 20px) 50%;
@@ -567,7 +566,6 @@ select::-ms-expand {
 }
 select.color-white {
   color: #ffffff;
-  background-image: url(../i/fa-angle-down-white.png);
 }
 select.color-white option {
   color: #5d5d5d;
