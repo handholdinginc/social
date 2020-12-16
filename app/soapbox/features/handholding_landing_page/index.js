@@ -96,7 +96,7 @@ Stream your content to your audience, using your own custom emoji and a secure s
 				Integrated content warnings
 			    </h2>
 			    <div className="mt-25 col-lg-9 color-heading f-14 text-adaptive" data-aos="fade-down" data-aos-delay="0">
-				With native level support for content warnings, users can choose to expand or hide content as they see fit. Don't feel like reading about politics? Click hide on the post witha politics content warning. It's that simple.
+				With native level support for content warnings, users can choose to expand or hide content as they see fit. Don't feel like reading about politics? Click hide on the post with a politics content warning. It's that simple.
 			    </div>
                             <br/>
 			    <h2 className="col-lg-11 color-main" data-aos="fade-down" data-aos-delay="0">
@@ -110,7 +110,7 @@ Stream your content to your audience, using your own custom emoji and a secure s
 				Power User Regular Expression support
 			    </h2>
 			    <div className="mt-25 col-lg-9 color-heading f-14 text-adaptive" data-aos="fade-down" data-aos-delay="0">
-				Set up your filters and blocks to be done in detail, with our regex power user feature, capturing any number of complex queries and filters. With Handholding Social, all thisis at your fingertips.
+				Set up your filters and blocks to be done in detail, with our regex power user feature, capturing any number of complex queries and filters. With Handholding Social, all this is at your fingertips.
 			    </div>
 			</div>
 		    </div>
@@ -150,7 +150,7 @@ Stream your content to your audience, using your own custom emoji and a secure s
 				Ad-Free
 			    </h2>
 			    <div className="mt-25 col-lg-9 color-heading f-18 text-adaptive" data-aos="fade-down" data-aos-delay="0">
-				Join a social media network where you aren't a commodity to be traded. We run noads, have no promoted content, and do not sell your data. Why settle for less?
+				Join a social media network where you aren't a commodity to be traded. We run no ads, have no promoted content, and do not sell your data. Why settle for less?
                                 <div/>
                                 <a href="/signup" className="btn mt-60 lg action-1 px-xl-4" data-aos="fade-down" data-aos-delay="250">
 				    Join Now
