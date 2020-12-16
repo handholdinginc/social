@@ -43,7 +43,7 @@ class HandholdingLandingPage extends ImmutablePureComponent {
 				    Streaming, with a social touch
 				</h2>
 				<div className="mt-25 col-lg-9 color-heading f-18 text-adaptive" data-aos="fade-down" data-aos-delay="0">
-				    Join 25,000+ streamers and microbloggers in the fastest-growing social media streaming community. Stream your favorite content to your friends with a chat where you can use custom emoji and join our microblogging community with more than twenty five thousand peers and growing.
+				    Join 25,000+ streamers and microbloggers in the fastest-growing social media streaming community. Stream your favorite content to your friends, in a chat where you can use custom emoji, and find a home in your new microblogging community.
                                     <div/>
 				    <a href="/signup" className="btn mt-60 lg action-1 px-xl-4" data-aos="fade-down" data-aos-delay="250">
 				        Join Now
