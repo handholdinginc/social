@@ -6,7 +6,7 @@ import RegistrationForm from './components/registration_form';
 import SiteBanner from '../public_layout/components/site_banner';
 
 
-import './script.js';
+import './js/script.js';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
