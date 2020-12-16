@@ -10,6 +10,10 @@ import './js/script.js';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
+import "./css/bootstrap.min.css";
+import "./css/jquery.fancybox.min.css";
+
+
 
 const mapStateToProps = (state, props) => ({
     instance: state.get('instance'),
@@ -158,12 +162,6 @@ Stream your content to your audience, using your own custom emoji and a secure s
 		</div>
             </section>
 
-	    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@100;200;300;400;500;600;700;800;900&family=DM+Sans:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-	    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossOrigin="anonymous"/>
-	    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
-
-	    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css"/>
-	    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
             </div>
         );
     }
