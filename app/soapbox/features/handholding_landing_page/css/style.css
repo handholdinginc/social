@@ -209,12 +209,6 @@ b, strong {
   left: auto;
   right: 0;
 }
-.slick-prev:before {
-  background: url(../i/slick-arrow-left.svg) no-repeat 0 50%;
-}
-[dir=rtl] .slick-prev:before {
-  background: url(../i/slick-arrow-right.svg) no-repeat 100% 50%;
-}
 
 .slick-next {
   right: 0;
@@ -222,12 +216,6 @@ b, strong {
 [dir=rtl] .slick-next {
   left: 0;
   right: auto;
-}
-.slick-next:before {
-  background: url(../i/slick-arrow-right.svg) no-repeat 100% 50%;
-}
-[dir=rtl] .slick-next:before {
-  background: url(../i/slick-arrow-left.svg) no-repeat 0 50%;
 }
 
 /* Dots */
@@ -286,19 +274,6 @@ b, strong {
   outline: none;
 }
 
-/* Slick slider Dark arrows */
-.arrows-dark .slick-prev:before {
-  background: url(../i/slick-arrow-left-dark.svg) no-repeat 0 50%;
-}
-[dir=rtl] .arrows-dark .slick-prev:before {
-  background: url(../i/slick-arrow-right-dark.svg) no-repeat 100% 50%;
-}
-.arrows-dark .slick-next:before {
-  background: url(../i/slick-arrow-right-dark.svg) no-repeat 100% 50%;
-}
-[dir=rtl] .arrows-dark .slick-next:before {
-  background: url(../i/slick-arrow-left-dark.svg) no-repeat 0 50%;
-}
 
 .container {
   position: relative;
