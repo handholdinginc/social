@@ -5,6 +5,7 @@ import { Switch, Route } from 'react-router-dom';
 import NotificationsContainer from 'soapbox/features/ui/containers/notifications_container';
 import Header from './components/header';
 import Footer from './components/footer';
+import HandholdingLandingPage from '../handholding_landing_page';
 import LandingPage from '../landing_page';
 import AboutPage from '../about';
 import { getSoapboxConfig } from 'soapbox/actions/soapbox';
@@ -29,14 +30,12 @@ class PublicLayout extends ImmutablePureComponent {
     return (
       <div className='public-layout'>
         <div className='public-layout__top'>
-          {wave}
           <Header />
-          <div className='container'>
             <Switch>
-              <Route exact path='/' component={LandingPage} />
-              <Route exact path='/about/:slug?' component={AboutPage} />
+                <Route exact path='/' component={HandholdingLandingPage} />
+                <Route exact path='/about/:slug?' component={AboutPage} />
+                <Route exact path='/signup' component={LandingPage} />
             </Switch>
-          </div>
         </div>
         <Footer />
         <NotificationsContainer />
