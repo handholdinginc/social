@@ -36,6 +36,11 @@ const messages = defineMessages({
   copy: { id: 'status.copy', defaultMessage: 'Copy link to post' },
   bookmark: { id: 'status.bookmark', defaultMessage: 'Bookmark' },
   unbookmark: { id: 'status.unbookmark', defaultMessage: 'Remove bookmark' },
+  deactivateUser: { id: 'admin.users.actions.deactivate_user', defaultMessage: 'Deactivate @{name}' },
+  deleteUser: { id: 'admin.users.actions.delete_user', defaultMessage: 'Delete @{name}' },
+  deleteStatus: { id: 'admin.statuses.actions.delete_status', defaultMessage: 'Delete post' },
+  markStatusSensitive: { id: 'admin.statuses.actions.mark_status_sensitive', defaultMessage: 'Mark post sensitive' },
+  markStatusNotSensitive: { id: 'admin.statuses.actions.mark_status_not_sensitive', defaultMessage: 'Mark post not sensitive' },
 });
 
 const mapStateToProps = state => {
@@ -74,10 +79,15 @@ class ActionBar extends React.PureComponent {
     onReport: PropTypes.func,
     onPin: PropTypes.func,
     onEmbed: PropTypes.func,
+    onDeactivateUser: PropTypes.func,
+    onDeleteUser: PropTypes.func,
+    onDeleteStatus: PropTypes.func,
+    onToggleStatusSensitivity: PropTypes.func,
     intl: PropTypes.object.isRequired,
     onOpenUnauthorizedModal: PropTypes.func.isRequired,
     me: SoapboxPropTypes.me,
     isStaff: PropTypes.bool.isRequired,
+    allowedEmoji: ImmutablePropTypes.list,
   };
 
   static defaultProps = {
@@ -153,7 +163,7 @@ class ActionBar extends React.PureComponent {
   }
 
   handleLikeButtonClick = e => {
-    const meEmojiReact = getReactForStatus(this.props.status) || '👍';
+    const meEmojiReact = getReactForStatus(this.props.status, this.props.allowedEmoji) || '👍';
     if (this.isMobile()) {
       if (this.state.emojiSelectorVisible) {
         this.handleReactClick(meEmojiReact)();
@@ -243,6 +253,22 @@ class ActionBar extends React.PureComponent {
     }
   }
 
+  handleDeactivateUser = () => {
+    this.props.onDeactivateUser(this.props.status);
+  }
+
+  handleDeleteUser = () => {
+    this.props.onDeleteUser(this.props.status);
+  }
+
+  handleToggleStatusSensitivity = () => {
+    this.props.onToggleStatusSensitivity(this.props.status);
+  }
+
+  handleDeleteStatus = () => {
+    this.props.onDeleteStatus(this.props.status);
+  }
+
   setRef = c => {
     this.node = c;
   }
@@ -255,12 +281,12 @@ class ActionBar extends React.PureComponent {
   }
 
   render() {
-    const { status, intl, me, isStaff } = this.props;
+    const { status, intl, me, isStaff, allowedEmoji } = this.props;
     const { emojiSelectorVisible } = this.state;
 
     const publicStatus = ['public', 'unlisted'].includes(status.get('visibility'));
     const mutingConversation = status.get('muted');
-    const meEmojiReact = getReactForStatus(status);
+    const meEmojiReact = getReactForStatus(status, allowedEmoji);
 
     let menu = [];
 
@@ -298,6 +324,10 @@ class ActionBar extends React.PureComponent {
         menu.push(null);
         menu.push({ text: intl.formatMessage(messages.admin_account, { name: status.getIn(['account', 'username']) }), href: `/pleroma/admin/#/users/${status.getIn(['account', 'id'])}/` });
         // menu.push({ text: intl.formatMessage(messages.admin_status), href: `/admin/accounts/${status.getIn(['account', 'id'])}/statuses/${status.get('id')}` });
+        menu.push({ text: intl.formatMessage(messages.deactivateUser, { name: status.getIn(['account', 'username']) }), action: this.handleDeactivateUser });
+        menu.push({ text: intl.formatMessage(messages.deleteUser, { name: status.getIn(['account', 'username']) }), action: this.handleDeleteUser });
+        menu.push({ text: intl.formatMessage(status.get('sensitive') === false ? messages.markStatusSensitive : messages.markStatusNotSensitive), action: this.handleToggleStatusSensitivity });
+        menu.push({ text: intl.formatMessage(messages.deleteStatus), action: this.handleDeleteStatus });
       }
     }
 

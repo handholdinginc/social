@@ -46,6 +46,8 @@ import { attachFullscreenListener, detachFullscreenListener, isFullscreen } from
 import { textForScreenReader, defaultMediaVisibility } from '../../components/status';
 import Icon from 'soapbox/components/icon';
 import { getSettings } from 'soapbox/actions/settings';
+import { getSoapboxConfig } from 'soapbox/actions/soapbox';
+import { deactivateUserModal, deleteUserModal, deleteStatusModal, toggleStatusSensitivityModal } from 'soapbox/actions/moderation';
 
 const messages = defineMessages({
   deleteConfirm: { id: 'confirmations.delete.confirm', defaultMessage: 'Delete' },
@@ -111,6 +113,7 @@ const makeMapStateToProps = () => {
       domain: state.getIn(['meta', 'domain']),
       me: state.get('me'),
       displayMedia: getSettings(state).get('displayMedia'),
+      allowedEmoji: getSoapboxConfig(state).get('allowedEmoji'),
     };
   };
 
@@ -298,6 +301,26 @@ class Status extends ImmutablePureComponent {
 
   handleEmbed = (status) => {
     this.props.dispatch(openModal('EMBED', { url: status.get('url') }));
+  }
+
+  handleDeactivateUser = (status) => {
+    const { dispatch, intl } = this.props;
+    dispatch(deactivateUserModal(intl, status.getIn(['account', 'id'])));
+  }
+
+  handleDeleteUser = (status) => {
+    const { dispatch, intl } = this.props;
+    dispatch(deleteUserModal(intl, status.getIn(['account', 'id'])));
+  }
+
+  handleToggleStatusSensitivity = (status) => {
+    const { dispatch, intl } = this.props;
+    dispatch(toggleStatusSensitivityModal(intl, status.get('id'), status.get('sensitive')));
+  }
+
+  handleDeleteStatus = (status) => {
+    const { dispatch, intl } = this.props;
+    dispatch(deleteStatusModal(intl, status.get('id')));
   }
 
   handleHotkeyMoveUp = () => {
@@ -521,6 +544,11 @@ class Status extends ImmutablePureComponent {
                 onPin={this.handlePin}
                 onBookmark={this.handleBookmark}
                 onEmbed={this.handleEmbed}
+                onDeactivateUser={this.handleDeactivateUser}
+                onDeleteUser={this.handleDeleteUser}
+                onToggleStatusSensitivity={this.handleToggleStatusSensitivity}
+                onDeleteStatus={this.handleDeleteStatus}
+                allowedEmoji={this.props.allowedEmoji}
               />
             </div>
           </HotKeys>

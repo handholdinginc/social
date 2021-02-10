@@ -194,6 +194,10 @@ export function ImportData() {
   return import(/* webpackChunkName: "features/import_data" */'../../import_data');
 }
 
+export function Backups() {
+  return import(/* webpackChunkName: "features/backups" */'../../backups');
+}
+
 export function PasswordReset() {
   return import(/* webpackChunkName: "features/auth_login" */'../../auth_login/components/password_reset');
 }
@@ -216,4 +220,20 @@ export function ChatRoom() {
 
 export function ServerInfo() {
   return import(/* webpackChunkName: "features/server_info" */'../../server_info');
+}
+
+export function Dashboard() {
+  return import(/* webpackChunkName: "features/admin" */'../../admin');
+}
+
+export function AwaitingApproval() {
+  return import(/* webpackChunkName: "features/admin/awaiting_approval" */'../../admin/awaiting_approval');
+}
+
+export function Reports() {
+  return import(/* webpackChunkName: "features/admin/reports" */'../../admin/reports');
+}
+
+export function ModerationLog() {
+  return import(/* webpackChunkName: "features/admin/moderation_log" */'../../admin/moderation_log');
 }

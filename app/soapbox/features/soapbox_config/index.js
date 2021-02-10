@@ -14,7 +14,7 @@ import {
   FormPropTypes,
 } from 'soapbox/features/forms';
 import { Map as ImmutableMap, List as ImmutableList, fromJS } from 'immutable';
-import { updateAdminConfig } from 'soapbox/actions/admin';
+import { updateConfig } from 'soapbox/actions/admin';
 import Icon from 'soapbox/components/icon';
 import { defaultConfig } from 'soapbox/actions/soapbox';
 import { uploadMedia } from 'soapbox/actions/media';
@@ -82,20 +82,18 @@ class SoapboxConfig extends ImmutablePureComponent {
 
   getParams = () => {
     const { soapbox } = this.state;
-    return {
-      configs: [{
-        group: ':pleroma',
-        key: ':frontend_configurations',
-        value: [{
-          tuple: [':soapbox_fe', soapbox.toJS()],
-        }],
+    return [{
+      group: ':pleroma',
+      key: ':frontend_configurations',
+      value: [{
+        tuple: [':soapbox_fe', soapbox.toJS()],
       }],
-    };
+    }];
   }
 
   handleSubmit = (event) => {
     const { dispatch } = this.props;
-    dispatch(updateAdminConfig(this.getParams())).then(() => {
+    dispatch(updateConfig(this.getParams())).then(() => {
       this.setState({ isLoading: false });
     }).catch((error) => {
       this.setState({ isLoading: false });
@@ -310,19 +308,18 @@ class SoapboxConfig extends ImmutablePureComponent {
             </FieldsGroup>
             <Accordion
               headline={intl.formatMessage(messages.rawJSONLabel)}
-              content={(
-                <div className={this.state.jsonValid ? 'code-editor' : 'code-editor code-editor--invalid'}>
-                  <SimpleTextarea
-                    hint={intl.formatMessage(messages.rawJSONHint)}
-                    value={this.state.rawJSON}
-                    onChange={this.handleEditJSON}
-                    rows={12}
-                  />
-                </div>
-              )}
               expanded={this.state.jsonEditorExpanded}
               onToggle={this.toggleJSONEditor}
-            />
+            >
+              <div className={this.state.jsonValid ? 'code-editor' : 'code-editor code-editor--invalid'}>
+                <SimpleTextarea
+                  hint={intl.formatMessage(messages.rawJSONHint)}
+                  value={this.state.rawJSON}
+                  onChange={this.handleEditJSON}
+                  rows={12}
+                />
+              </div>
+            </Accordion>
           </fieldset>
           <div className='actions'>
             <button name='button' type='submit' className='btn button button-primary'>

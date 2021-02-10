@@ -16,7 +16,7 @@ import { debounce } from 'lodash';
 import { uploadCompose, resetCompose } from '../../actions/compose';
 import { expandHomeTimeline } from '../../actions/timelines';
 import { expandNotifications } from '../../actions/notifications';
-import { fetchReports } from '../../actions/admin';
+import { fetchReports, fetchUsers, fetchConfig } from '../../actions/admin';
 import { fetchFilters } from '../../actions/filters';
 import { fetchChats } from 'soapbox/actions/chats';
 import { clearHeight } from '../../actions/height_cache';
@@ -32,6 +32,7 @@ import ProfilePage from 'soapbox/pages/profile_page';
 // import GroupSidebarPanel from '../groups/sidebar_panel';
 import SearchPage from 'soapbox/pages/search_page';
 import HomePage from 'soapbox/pages/home_page';
+import AdminPage from 'soapbox/pages/admin_page';
 import SidebarMenu from '../../components/sidebar_menu';
 import { connectUserStream } from '../../actions/streaming';
 import { Redirect } from 'react-router-dom';
@@ -80,12 +81,17 @@ import {
   EditProfile,
   SoapboxConfig,
   ImportData,
+  Backups,
   PasswordReset,
   SecurityForm,
   MfaForm,
   ChatIndex,
   ChatRoom,
   ServerInfo,
+  Dashboard,
+  AwaitingApproval,
+  Reports,
+  ModerationLog,
 } from './util/async-components';
 
 // Dummy import, to make sure that <Status /> ends up in the application bundle.
@@ -207,8 +213,8 @@ class SwitchingColumnsArea extends React.PureComponent {
         <WrappedRoute path='/auth/mfa' layout={LAYOUT.DEFAULT} component={MfaForm} exact />
 
         <WrappedRoute path='/' exact page={HomePage} component={HomeTimeline} content={children} />
-        <WrappedRoute path='/timeline/local' exact page={HomePage} component={CommunityTimeline} content={children} />
-        <WrappedRoute path='/timeline/fediverse' exact page={HomePage} component={PublicTimeline} content={children} />
+        <WrappedRoute path='/timeline/local' exact page={HomePage} component={CommunityTimeline} content={children} publicRoute />
+        <WrappedRoute path='/timeline/fediverse' exact page={HomePage} component={PublicTimeline} content={children} publicRoute />
         <WrappedRoute path='/timeline/:instance' exact page={HomePage} component={RemoteTimeline} content={children} />
         <WrappedRoute path='/messages' layout={LAYOUT.DEFAULT} component={DirectTimeline} content={children} componentParams={{ shouldUpdateScroll: this.shouldUpdateScroll }} />
 
@@ -272,8 +278,14 @@ class SwitchingColumnsArea extends React.PureComponent {
         <WrappedRoute path='/settings/preferences' layout={LAYOUT.DEFAULT} component={Preferences} content={children} />
         <WrappedRoute path='/settings/profile' layout={LAYOUT.DEFAULT} component={EditProfile} content={children} />
         <WrappedRoute path='/settings/import' layout={LAYOUT.DEFAULT} component={ImportData} content={children} />
+        <WrappedRoute path='/backups' layout={LAYOUT.DEFAULT} component={Backups} content={children} />
         <WrappedRoute path='/soapbox/config' layout={LAYOUT.DEFAULT} component={SoapboxConfig} content={children} />
 
+        <Redirect from='/admin/dashboard' to='/admin' exact />
+        <WrappedRoute path='/admin' page={AdminPage} component={Dashboard} content={children} exact />
+        <WrappedRoute path='/admin/approval' page={AdminPage} component={AwaitingApproval} content={children} exact />
+        <WrappedRoute path='/admin/reports' page={AdminPage} component={Reports} content={children} exact />
+        <WrappedRoute path='/admin/log' page={AdminPage} component={ModerationLog} content={children} exact />
         <WrappedRoute path='/info' layout={LAYOUT.EMPTY} component={ServerInfo} content={children} />
 
         <WrappedRoute layout={LAYOUT.EMPTY} component={GenericNotFound} content={children} />
@@ -448,8 +460,11 @@ class UI extends React.PureComponent {
       this.props.dispatch(expandNotifications());
       this.props.dispatch(fetchChats());
       // this.props.dispatch(fetchGroups('member'));
-      if (isStaff(account))
+      if (isStaff(account)) {
         this.props.dispatch(fetchReports({ state: 'open' }));
+        this.props.dispatch(fetchUsers({ page: 1, filters: 'local,need_approval' }));
+        this.props.dispatch(fetchConfig());
+      }
 
       setTimeout(() => this.props.dispatch(fetchFilters()), 500);
     }
