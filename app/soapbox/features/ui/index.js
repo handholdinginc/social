@@ -42,8 +42,6 @@ import ChatPanes from 'soapbox/features/chats/components/chat_panes';
 import ProfileHoverCard from 'soapbox/components/profile_hover_card';
 import { getAccessToken } from 'soapbox/utils/auth';
 
-import LandingPage from '../landing_page';
-
 
 import {
   Status,
@@ -211,7 +209,6 @@ class SwitchingColumnsArea extends React.PureComponent {
 
     return (
       <Switch>
-        <WrappedRoute path='/signup' component={LandingPage} publicRoute exact />
         <WrappedRoute path='/auth/sign_in' component={LoginPage} publicRoute exact />
         <WrappedRoute path='/auth/reset_password' component={PasswordReset} publicRoute exact />
         <WrappedRoute path='/auth/edit' layout={LAYOUT.DEFAULT} component={SecurityForm} exact />
