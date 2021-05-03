@@ -19,6 +19,9 @@ import ProfileInfoPanel from '../../ui/components/profile_info_panel';
 import { debounce } from 'lodash';
 import StillImage from 'soapbox/components/still_image';
 import ActionButton from 'soapbox/features/ui/components/action_button';
+import { isVerified } from 'soapbox/utils/accounts';
+import { openModal } from 'soapbox/actions/modal';
+import { List as ImmutableList, Map as ImmutableMap } from 'immutable';
 
 const messages = defineMessages({
   edit_profile: { id: 'account.edit_profile', defaultMessage: 'Edit profile' },
@@ -48,6 +51,8 @@ const messages = defineMessages({
   add_or_remove_from_list: { id: 'account.add_or_remove_from_list', defaultMessage: 'Add or Remove from lists' },
   deactivateUser: { id: 'admin.users.actions.deactivate_user', defaultMessage: 'Deactivate @{name}' },
   deleteUser: { id: 'admin.users.actions.delete_user', defaultMessage: 'Delete @{name}' },
+  verifyUser: { id: 'admin.users.actions.verify_user', defaultMessage: 'Verify @{name}' },
+  unverifyUser: { id: 'admin.users.actions.unverify_user', defaultMessage: 'Unverify @{name}' },
 });
 
 const mapStateToProps = state => {
@@ -101,6 +106,24 @@ class Header extends ImmutablePureComponent {
   }, 5, {
     trailing: true,
   });
+
+  onAvatarClick = () => {
+    const avatar_url = this.props.account.get('avatar');
+    const avatar = ImmutableMap({
+      type: 'image',
+      preview_url: avatar_url,
+      url: avatar_url,
+      description: '',
+    });
+    this.props.dispatch(openModal('MEDIA', { media: ImmutableList.of(avatar), index: 0 }));
+  }
+
+  handleAvatarClick = (e) => {
+    if (e.button === 0 && !(e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      this.onAvatarClick();
+    }
+  }
 
   makeMenu() {
     const { account, intl, me, isStaff, version } = this.props;
@@ -168,11 +191,20 @@ class Header extends ImmutablePureComponent {
       }
     }
 
-    if (account.get('id') !== me && isStaff) {
+    if (isStaff) {
       menu.push(null);
       menu.push({ text: intl.formatMessage(messages.admin_account, { name: account.get('username') }), href: `/pleroma/admin/#/users/${account.get('id')}/`, newTab: true });
-      menu.push({ text: intl.formatMessage(messages.deactivateUser, { name: account.get('username') }), action: this.props.onDeactivateUser });
-      menu.push({ text: intl.formatMessage(messages.deleteUser, { name: account.get('username') }), action: this.props.onDeleteUser });
+
+      if (isVerified(account)) {
+        menu.push({ text: intl.formatMessage(messages.unverifyUser, { name: account.get('username') }), action: this.props.onUnverifyUser });
+      } else {
+        menu.push({ text: intl.formatMessage(messages.verifyUser, { name: account.get('username') }), action: this.props.onVerifyUser });
+      }
+
+      if (account.get('id') !== me) {
+        menu.push({ text: intl.formatMessage(messages.deactivateUser, { name: account.get('username') }), action: this.props.onDeactivateUser });
+        menu.push({ text: intl.formatMessage(messages.deleteUser, { name: account.get('username') }), action: this.props.onDeleteUser });
+      }
     }
 
     return menu;
@@ -243,9 +275,9 @@ class Header extends ImmutablePureComponent {
         <div className='account__header__bar'>
           <div className='account__header__extra'>
 
-            <div className='account__header__avatar'>
+            <a className='account__header__avatar' href={account.get('avatar')} onClick={this.handleAvatarClick} target='_blank'>
               <Avatar account={account} size={avatarSize} />
-            </div>
+            </a>
 
             <div className='account__header__extra__links'>
 

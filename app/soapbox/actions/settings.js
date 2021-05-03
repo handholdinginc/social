@@ -2,6 +2,7 @@ import { debounce } from 'lodash';
 import { showAlertForError } from './alerts';
 import { patchMe } from 'soapbox/actions/me';
 import { Map as ImmutableMap, List as ImmutableList } from 'immutable';
+import { isLoggedIn } from 'soapbox/utils/auth';
 import uuid from '../uuid';
 
 export const SETTING_CHANGE = 'SETTING_CHANGE';
@@ -24,6 +25,7 @@ export const defaultSettings = ImmutableMap({
   defaultContentType: 'text/plain',
   themeMode: 'light',
   locale: navigator.language.split(/[-_]/)[0] || 'en',
+  showExplanationBox: true,
   explanationBox: true,
   otpEnabled: false,
 
@@ -52,6 +54,7 @@ export const defaultSettings = ImmutableMap({
   notifications: ImmutableMap({
     alerts: ImmutableMap({
       follow: true,
+      follow_request: false,
       favourite: true,
       reblog: true,
       mention: true,
@@ -67,6 +70,7 @@ export const defaultSettings = ImmutableMap({
 
     shows: ImmutableMap({
       follow: true,
+      follow_request: false,
       favourite: true,
       reblog: true,
       mention: true,
@@ -76,6 +80,7 @@ export const defaultSettings = ImmutableMap({
 
     sounds: ImmutableMap({
       follow: false,
+      follow_request: false,
       favourite: false,
       reblog: false,
       mention: false,
@@ -147,8 +152,9 @@ export function changeSetting(path, value) {
 };
 
 const debouncedSave = debounce((dispatch, getState) => {
+  if (!isLoggedIn(getState)) return;
+
   const state = getState();
-  if (!state.get('me')) return;
   if (getSettings(state).getIn(['saved'])) return;
 
   const data = state.get('settings').delete('saved').toJS();

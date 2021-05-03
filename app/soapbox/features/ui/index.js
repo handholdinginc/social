@@ -11,7 +11,6 @@ import SoapboxPropTypes from 'soapbox/utils/soapbox_prop_types';
 import NotificationsContainer from './containers/notifications_container';
 import LoadingBarContainer from './containers/loading_bar_container';
 import ModalContainer from './containers/modal_container';
-import { isMobile } from '../../is_mobile';
 import { debounce } from 'lodash';
 import { uploadCompose, resetCompose } from '../../actions/compose';
 import { expandHomeTimeline } from '../../actions/timelines';
@@ -21,6 +20,7 @@ import { fetchFilters } from '../../actions/filters';
 import { fetchChats } from 'soapbox/actions/chats';
 import { clearHeight } from '../../actions/height_cache';
 import { openModal } from '../../actions/modal';
+import { fetchFollowRequests } from '../../actions/accounts';
 import { WrappedRoute } from './util/react_router_helpers';
 import UploadArea from './components/upload_area';
 import TabsBar from './components/tabs_bar';
@@ -40,10 +40,10 @@ import Icon from 'soapbox/components/icon';
 import { isStaff } from 'soapbox/utils/accounts';
 import ChatPanes from 'soapbox/features/chats/components/chat_panes';
 import ProfileHoverCard from 'soapbox/components/profile_hover_card';
+import { getAccessToken } from 'soapbox/utils/auth';
 
 import {
   Status,
-  // GettingStarted,
   CommunityTimeline,
   PublicTimeline,
   RemoteTimeline,
@@ -98,6 +98,8 @@ import {
 // Without this it ends up in ~8 very commonly used bundles.
 import '../../components/status';
 
+const isMobile = width => width <= 1190;
+
 const messages = defineMessages({
   beforeUnload: { id: 'ui.beforeunload', defaultMessage: 'Your draft will be lost if you leave.' },
   publish: { id: 'compose_form.publish', defaultMessage: 'Publish' },
@@ -112,7 +114,7 @@ const mapStateToProps = state => {
     hasComposingText: state.getIn(['compose', 'text']).trim().length !== 0,
     hasMediaAttachments: state.getIn(['compose', 'media_attachments']).size > 0,
     dropdownMenuIsOpen: state.getIn(['dropdown_menu', 'openId']) !== null,
-    accessToken: state.getIn(['auth', 'user', 'access_token']),
+    accessToken: getAccessToken(state),
     streamingUrl: state.getIn(['instance', 'urls', 'streaming_api']),
     me,
     account,
@@ -153,11 +155,10 @@ const LAYOUT = {
     RIGHT: null,
   },
   DEFAULT: {
-    LEFT: [
-      <LinkFooter key='1' />,
-    ],
+    LEFT: null,
     RIGHT: [
       <FeaturesPanel key='0' />,
+      <LinkFooter key='1' />,
     ],
   },
   STATUS: {
@@ -459,7 +460,7 @@ class UI extends React.PureComponent {
       this.props.dispatch(expandHomeTimeline());
       this.props.dispatch(expandNotifications());
       this.props.dispatch(fetchChats());
-      // this.props.dispatch(fetchGroups('member'));
+
       if (isStaff(account)) {
         this.props.dispatch(fetchReports({ state: 'open' }));
         this.props.dispatch(fetchUsers({ page: 1, filters: 'local,need_approval' }));
@@ -467,6 +468,10 @@ class UI extends React.PureComponent {
       }
 
       setTimeout(() => this.props.dispatch(fetchFilters()), 500);
+
+      if (account.get('locked')) {
+        setTimeout(() => this.props.dispatch(fetchFollowRequests()), 700);
+      }
     }
     this.connectStreaming();
   }

@@ -6,6 +6,8 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const AssetsManifestPlugin = require('webpack-assets-manifest');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const HtmlWebpackHarddiskPlugin = require('html-webpack-harddisk-plugin');
+const CopyPlugin = require('copy-webpack-plugin');
+const { UnusedFilesWebpackPlugin } = require('unused-files-webpack-plugin');
 const { env, settings, output } = require('./configuration');
 const rules = require('./rules');
 
@@ -66,6 +68,13 @@ module.exports = {
       writeToDisk: true,
       publicPath: true,
     }),
+    // https://www.npmjs.com/package/unused-files-webpack-plugin#options
+    new UnusedFilesWebpackPlugin({
+      patterns: ['app/**/*.*'],
+      globOptions: {
+        ignore: ['node_modules/**/*', '**/__*__/**/*'],
+      },
+    }),
     // https://github.com/ampedandwired/html-webpack-plugin
     new HtmlWebpackPlugin({
       template: 'app/index.ejs',
@@ -83,6 +92,18 @@ module.exports = {
     }),
     new HtmlWebpackHarddiskPlugin({
       outputPath: join(__dirname, '..', 'static'),
+    }),
+    new CopyPlugin({
+      patterns: [{
+        from: join(__dirname, '../node_modules/twemoji/assets/svg'),
+        to: join(__dirname, '../static/emoji'),
+      }, {
+        from: join(__dirname, '../node_modules/emoji-datasource/img/twitter/sheets/32.png'),
+        to: join(__dirname, '../static/emoji/sheet_10.png'),
+      }],
+      options: {
+        concurrency: 100,
+      },
     }),
   ],
 

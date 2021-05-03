@@ -10,9 +10,11 @@ import LinkFooter from '../features/ui/components/link_footer';
 import SignUpPanel from '../features/ui/components/sign_up_panel';
 import ProfileInfoPanel from '../features/ui/components/profile_info_panel';
 import ProfileMediaPanel from '../features/ui/components/profile_media_panel';
-import { acctFull } from 'soapbox/utils/accounts';
+import { getAcct } from 'soapbox/utils/accounts';
+import { displayFqn } from 'soapbox/utils/state';
 import { getFeatures } from 'soapbox/utils/features';
 import { makeGetAccount } from '../selectors';
+import { Redirect } from 'react-router-dom';
 
 const mapStateToProps = (state, { params: { username }, withReplies = false }) => {
   const accounts = state.getIn(['accounts']);
@@ -32,11 +34,21 @@ const mapStateToProps = (state, { params: { username }, withReplies = false }) =
 
   //Children components fetch information
 
+  let realAccount;
+  if (!account) {
+    const maybeAccount = accounts.get(username);
+    if (maybeAccount) {
+      realAccount = maybeAccount;
+    }
+  }
+
   return {
     account: accountId ? getAccount(state, accountId) : account,
     accountId,
     accountUsername,
     features: getFeatures(state.get('instance')),
+    realAccount,
+    displayFqn: displayFqn(state),
   };
 };
 
@@ -46,17 +58,22 @@ class ProfilePage extends ImmutablePureComponent {
   static propTypes = {
     account: ImmutablePropTypes.map,
     accountUsername: PropTypes.string.isRequired,
+    displayFqn: PropTypes.bool,
     features: PropTypes.object,
   };
 
   render() {
-    const { children, accountId, account, accountUsername, features } = this.props;
+    const { children, accountId, account, displayFqn, accountUsername, features, realAccount } = this.props;
     const bg = account ? account.getIn(['customizations', 'background']) : undefined;
+
+    if (realAccount) {
+      return <Redirect to={`/@${realAccount.get('acct')}`} />;
+    }
 
     return (
       <div className={bg && `page page--customization page--${bg}` || 'page'}>
         {account && <Helmet>
-          <title>@{acctFull(account)}</title>
+          <title>@{getAcct(account, displayFqn)}</title>
         </Helmet>}
 
         <div className='page__top'>

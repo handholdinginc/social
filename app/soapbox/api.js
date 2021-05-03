@@ -2,6 +2,7 @@
 
 import axios from 'axios';
 import LinkHeader from 'http-link-header';
+import { getAccessToken, getAppToken } from 'soapbox/utils/auth';
 
 export const getLinks = response => {
   const value = response.headers.link;
@@ -9,23 +10,30 @@ export const getLinks = response => {
   return LinkHeader.parse(value);
 };
 
-const getToken = (getState, authType) =>
-  getState().getIn(['auth', authType, 'access_token']);
+const getToken = (getState, authType) => {
+  const state = getState();
+  return authType === 'app' ? getAppToken(state) : getAccessToken(state);
+};
 
-export default (getState, authType = 'user') => {
-  const accessToken = getToken(getState, authType);
+const maybeParseJSON = data => {
+  try {
+    return JSON.parse(data);
+  } catch(Exception) {
+    return data;
+  }
+};
 
+export const baseClient = accessToken => {
   return axios.create({
     headers: Object.assign(accessToken ? {
       'Authorization': `Bearer ${accessToken}`,
     } : {}),
 
-    transformResponse: [function(data) {
-      try {
-        return JSON.parse(data);
-      } catch(Exception) {
-        return data;
-      }
-    }],
+    transformResponse: [maybeParseJSON],
   });
+};
+
+export default (getState, authType = 'user') => {
+  const accessToken = getToken(getState, authType);
+  return baseClient(accessToken);
 };

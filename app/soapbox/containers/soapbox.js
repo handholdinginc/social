@@ -124,7 +124,7 @@ class SoapboxMount extends React.PureComponent {
 
     return (
       <IntlProvider locale={locale} messages={this.state.messages}>
-        <>
+        <ErrorBoundary>
           <Helmet>
             <body className={bodyClass} />
             {themeCss && <style id='theme' type='text/css'>{`:root{${themeCss}}`}</style>}
@@ -141,7 +141,7 @@ class SoapboxMount extends React.PureComponent {
               </Switch>
             </ScrollContext>
           </BrowserRouter>
-        </>
+        </ErrorBoundary>
       </IntlProvider>
     );
   }
@@ -150,12 +150,34 @@ class SoapboxMount extends React.PureComponent {
 
 export default class Soapbox extends React.PureComponent {
 
+  printConsoleWarning = () => {
+    /* eslint-disable no-console */
+    console.log('%cStop!', [
+      'color: #ff0000',
+      'display: block',
+      'font-family: system-ui, -apple-system, BlinkMacSystemFont, Roboto, Ubuntu, "Helvetica Neue", sans-serif',
+      'font-size: 50px',
+      'font-weight: 800',
+      'padding: 4px 0',
+    ].join(';'));
+    console.log('%cThis is a browser feature intended for developers. If someone told you to copy-paste something here it is a scam and will give them access to your account.', [
+      'color: #111111',
+      'display: block',
+      'font-family: system-ui, -apple-system, BlinkMacSystemFont, Roboto, Ubuntu, "Helvetica Neue", sans-serif',
+      'font-size: 18px',
+      'padding: 4px 0 16px',
+    ].join(';'));
+    /* eslint-enable no-console */
+  }
+
+  componentDidMount() {
+    this.printConsoleWarning();
+  }
+
   render() {
     return (
       <Provider store={store}>
-        <ErrorBoundary>
-          <SoapboxMount />
-        </ErrorBoundary>
+        <SoapboxMount />
       </Provider>
     );
   }
