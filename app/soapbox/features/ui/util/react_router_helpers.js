@@ -83,14 +83,14 @@ class WrappedRoute extends React.Component {
   render() {
     const { component: Component, content, publicRoute, me, ...rest } = this.props;
 
-    if (!publicRoute && me === false) {
-      const actualUrl = encodeURIComponent(this.props.computedMatch.url); // eslint-disable-line react/prop-types
-      return <Redirect to={`/auth/sign_in?redirect_uri=${actualUrl}`} />;
-      // return <Route path={this.props.path} component={() => {
-      //    window.location.href = `/auth/sign_in?redirect_uri=${actualUrl}`;
-      //    return null;
-      //  }}/>
-    }
+    // if (!publicRoute && me === false) {
+    //   const actualUrl = encodeURIComponent(this.props.computedMatch.url); // eslint-disable-line react/prop-types
+    //   return <Redirect to={`/auth/sign_in?redirect_uri=${actualUrl}`} />;
+    //   // return <Route path={this.props.path} component={() => {
+    //   //    window.location.href = `/auth/sign_in?redirect_uri=${actualUrl}`;
+    //   //    return null;
+    //   //  }}/>
+    // }
 
     return <Route {...rest} render={this.renderComponent} />;
   }
