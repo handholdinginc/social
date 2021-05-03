@@ -17,19 +17,7 @@ class LandingPage extends ImmutablePureComponent {
     return (
       <div className='landing'>
         <div className='landing-columns'>
-          <div className='landing-columns--left'>
-            <div className='landing__brand'>
-              <Link className='brand' to='/'>
-                <SiteBanner />
-              </Link>
-              <div className='brand__tagline'>
-                <span>{instance.get('description')}</span>
-              </div>
-            </div>
-          </div>
-          <div className='landing-columns--right'>
-            <RegistrationForm />
-          </div>
+          <RegistrationForm />
         </div>
       </div>
     );
