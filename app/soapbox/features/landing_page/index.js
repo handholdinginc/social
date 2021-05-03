@@ -5,8 +5,8 @@ import { Link } from 'react-router-dom';
 import RegistrationForm from './components/registration_form';
 import SiteBanner from '../public_layout/components/site_banner';
 
-import Header from './components/header';
-import Footer from './components/footer';
+import Header from '../public_layout/components/header';
+import Footer from '../public_layout/components/footer';
 
 
 const mapStateToProps = (state, props) => ({
