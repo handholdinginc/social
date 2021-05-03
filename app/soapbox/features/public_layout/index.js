@@ -35,7 +35,7 @@ class PublicLayout extends ImmutablePureComponent {
             <Switch>
                 <Route exact path='/' component={HandholdingLandingPage} />
                 <Route exact path='/about/:slug?' component={AboutPage} />
-                <Route exact path='/signup' component={LandingPage} />
+                <Route exact path='/signup' component={LandingPage} publicRoute />
             </Switch>
         </div>
         <Footer />
