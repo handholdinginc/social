@@ -211,7 +211,7 @@ class SwitchingColumnsArea extends React.PureComponent {
 
     return (
       <Switch>
-        <WrappedRoute path='/signup' component={PublicLayout} publicRoute exact content={children} />
+        <WrappedRoute path='/signup' component={LandingPage} publicRoute exact content={children} />
         <WrappedRoute path='/auth/sign_in' component={LoginPage} publicRoute exact />
         <WrappedRoute path='/auth/reset_password' component={PasswordReset} publicRoute exact />
         <WrappedRoute path='/auth/edit' layout={LAYOUT.DEFAULT} component={SecurityForm} exact />
