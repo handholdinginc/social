@@ -9,6 +9,7 @@ import {
   SimpleForm,
   FieldsGroup,
   TextInput,
+  SimpleInput,
   SimpleTextarea,
   FileChooserLogo,
   FormPropTypes,
@@ -17,7 +18,8 @@ import {
 import { Map as ImmutableMap, List as ImmutableList, fromJS } from 'immutable';
 import { updateConfig } from 'soapbox/actions/admin';
 import Icon from 'soapbox/components/icon';
-import { defaultConfig } from 'soapbox/actions/soapbox';
+import { makeDefaultConfig } from 'soapbox/actions/soapbox';
+import { getFeatures } from 'soapbox/utils/features';
 import { uploadMedia } from 'soapbox/actions/media';
 import { SketchPicker } from 'react-color';
 import Overlay from 'react-overlays/lib/Overlay';
@@ -26,22 +28,29 @@ import { supportsPassiveEvents } from 'detect-passive-events';
 import Accordion from '../ui/components/accordion';
 import SitePreview from './components/site_preview';
 import ThemeToggle from 'soapbox/features/ui/components/theme_toggle';
-import { defaultSettings } from 'soapbox/actions/settings';
 import IconPickerDropdown from './components/icon_picker_dropdown';
+import snackbar from 'soapbox/actions/snackbar';
 
 const messages = defineMessages({
   heading: { id: 'column.soapbox_config', defaultMessage: 'Soapbox config' },
+  saved: { id: 'soapbox_config.saved', defaultMessage: 'Soapbox config saved!' },
   copyrightFooterLabel: { id: 'soapbox_config.copyright_footer.meta_fields.label_placeholder', defaultMessage: 'Copyright footer' },
   promoItemIcon: { id: 'soapbox_config.promo_panel.meta_fields.icon_placeholder', defaultMessage: 'Icon' },
   promoItemLabel: { id: 'soapbox_config.promo_panel.meta_fields.label_placeholder', defaultMessage: 'Label' },
   promoItemURL: { id: 'soapbox_config.promo_panel.meta_fields.url_placeholder', defaultMessage: 'URL' },
   homeFooterItemLabel: { id: 'soapbox_config.home_footer.meta_fields.label_placeholder', defaultMessage: 'Label' },
   homeFooterItemURL: { id: 'soapbox_config.home_footer.meta_fields.url_placeholder', defaultMessage: 'URL' },
+  cryptoAdressItemTicker: { id: 'soapbox_config.crypto_address.meta_fields.ticker_placeholder', defaultMessage: 'Ticker' },
+  cryptoAdressItemAddress: { id: 'soapbox_config.crypto_address.meta_fields.address_placeholder', defaultMessage: 'Address' },
+  cryptoAdressItemNote: { id: 'soapbox_config.crypto_address.meta_fields.note_placeholder', defaultMessage: 'Note (optional)' },
+  cryptoDonatePanelLimitLabel: { id: 'soapbox_config.crypto_donate_panel_limit.meta_fields.limit_placeholder', defaultMessage: 'Number of items to display in the crypto homepage widget' },
   customCssLabel: { id: 'soapbox_config.custom_css.meta_fields.url_placeholder', defaultMessage: 'URL' },
   rawJSONLabel: { id: 'soapbox_config.raw_json_label', defaultMessage: 'Advanced: Edit raw JSON data' },
   rawJSONHint: { id: 'soapbox_config.raw_json_hint', defaultMessage: 'Edit the settings data directly. Changes made directly to the JSON file will override the form fields above. Click "Save" to apply your changes.' },
   verifiedCanEditNameLabel: { id: 'soapbox_config.verified_can_edit_name_label', defaultMessage: 'Allow verified users to edit their own display name.' },
   displayFqnLabel: { id: 'soapbox_config.display_fqn_label', defaultMessage: 'Display domain (eg @user@domain) for local accounts.' },
+  greentextLabel: { id: 'soapbox_config.greentext_label', defaultMessage: 'Enable greentext support' },
+  promoPanelIconsLink: { id: 'soapbox_config.hints.promo_panel_icons.link', defaultMessage: 'Soapbox Icons List' },
 });
 
 const listenerOptions = supportsPassiveEvents ? { passive: true } : false;
@@ -49,11 +58,17 @@ const listenerOptions = supportsPassiveEvents ? { passive: true } : false;
 const templates = {
   promoPanelItem: ImmutableMap({ icon: '', text: '', url: '' }),
   footerItem: ImmutableMap({ title: '', url: '' }),
+  cryptoAddress: ImmutableMap({ ticker: '', address: '', note: '' }),
 };
 
-const mapStateToProps = state => ({
-  soapbox: state.get('soapbox'),
-});
+const mapStateToProps = state => {
+  const instance = state.get('instance');
+
+  return {
+    soapbox: state.get('soapbox'),
+    features: getFeatures(instance),
+  };
+};
 
 export default @connect(mapStateToProps)
 @injectIntl
@@ -61,6 +76,7 @@ class SoapboxConfig extends ImmutablePureComponent {
 
   static propTypes = {
     soapbox: ImmutablePropTypes.map.isRequired,
+    features: PropTypes.object.isRequired,
     dispatch: PropTypes.func.isRequired,
     intl: PropTypes.object.isRequired,
   };
@@ -95,9 +111,10 @@ class SoapboxConfig extends ImmutablePureComponent {
   }
 
   handleSubmit = (event) => {
-    const { dispatch } = this.props;
+    const { dispatch, intl } = this.props;
     dispatch(updateConfig(this.getParams())).then(() => {
       this.setState({ isLoading: false });
+      dispatch(snackbar.success(intl.formatMessage(messages.saved)));
     }).catch((error) => {
       this.setState({ isLoading: false });
     });
@@ -158,12 +175,20 @@ class SoapboxConfig extends ImmutablePureComponent {
     );
   };
 
+  handleCryptoAdressItemChange = (index, key, field, getValue) => {
+    return this.handleItemChange(
+      ['cryptoAddresses', index], key, field, templates.cryptoAddress, getValue,
+    );
+  };
+
   handleEditJSON = e => {
     this.setState({ rawJSON: e.target.value });
   }
 
   getSoapboxConfig = () => {
-    return defaultConfig.mergeDeep(this.state.soapbox);
+    const { features } = this.props;
+    const { soapbox } = this.state;
+    return makeDefaultConfig(features).mergeDeep(soapbox);
   }
 
   toggleJSONEditor = (value) => this.setState({ jsonEditorExpanded: value });
@@ -190,7 +215,6 @@ class SoapboxConfig extends ImmutablePureComponent {
   render() {
     const { intl } = this.props;
     const soapbox = this.getSoapboxConfig();
-    const settings = defaultSettings.mergeDeep(soapbox.get('defaultSettings'));
 
     return (
       <Column icon='cog' heading={intl.formatMessage(messages.heading)} backBtnSlim>
@@ -211,7 +235,8 @@ class SoapboxConfig extends ImmutablePureComponent {
                       <label><FormattedMessage id='soapbox_config.fields.theme_label' defaultMessage='Default theme' /></label>
                       <ThemeToggle
                         onToggle={this.handleChange(['defaultSettings', 'themeMode'], value => value)}
-                        settings={settings}
+                        themeMode={soapbox.getIn(['defaultSettings', 'themeMode'])}
+                        intl={intl}
                       />
                     </div>
                   </div>
@@ -243,20 +268,26 @@ class SoapboxConfig extends ImmutablePureComponent {
                 onChange={this.handleChange(['verifiedCanEditName'], (e) => e.target.checked)}
               />
               <Checkbox
-                name='verifiedCanEditName'
+                name='displayFqn'
                 label={intl.formatMessage(messages.displayFqnLabel)}
                 checked={soapbox.get('displayFqn') === true}
                 onChange={this.handleChange(['displayFqn'], (e) => e.target.checked)}
+              />
+              <Checkbox
+                name='greentext'
+                label={intl.formatMessage(messages.greentextLabel)}
+                checked={soapbox.get('greentext') === true}
+                onChange={this.handleChange(['greentext'], (e) => e.target.checked)}
               />
             </FieldsGroup>
             <FieldsGroup>
               <div className='input with_block_label popup'>
                 <label><FormattedMessage id='soapbox_config.fields.promo_panel_fields_label' defaultMessage='Promo panel items' /></label>
                 <span className='hint'>
-                  <FormattedMessage id='soapbox_config.hints.promo_panel_fields' defaultMessage='You can have custom defined links displayed on the left panel of the timelines page.' />
+                  <FormattedMessage id='soapbox_config.hints.promo_panel_fields' defaultMessage='You can have custom defined links displayed on the right panel of the timelines page.' />
                 </span>
                 <span className='hint'>
-                  <FormattedMessage id='soapbox_config.hints.promo_panel_icons' defaultMessage='{ link }' values={{ link: <a target='_blank' href='https://forkaweso.me/Fork-Awesome/icons/'>Soapbox Icons List</a> }} />
+                  <FormattedMessage id='soapbox_config.hints.promo_panel_icons' defaultMessage='{ link }' values={{ link: <a target='_blank' href='https://forkaweso.me/Fork-Awesome/icons/'>{intl.formatMessage(messages.promoPanelIconsLink)}</a> }} />
                 </span>
                 {
                   soapbox.getIn(['promoPanel', 'items']).map((field, i) => (
@@ -323,6 +354,57 @@ class SoapboxConfig extends ImmutablePureComponent {
                 </div>
               </div>
             </FieldsGroup>
+            <FieldsGroup>
+              <div className='input with_block_label'>
+                <label><FormattedMessage id='soapbox_config.fields.crypto_addresses_label' defaultMessage='Cryptocurrency addresses' /></label>
+                <span className='hint'>
+                  <FormattedMessage id='soapbox_config.hints.crypto_addresses' defaultMessage='Add cryptocurrency addresses so users of your site can donate to you. Order matters, and you must use lowercase ticker values.' />
+                </span>
+                {
+                  soapbox.get('cryptoAddresses').map((address, i) => (
+                    <div className='row' key={i}>
+                      <TextInput
+                        label={intl.formatMessage(messages.cryptoAdressItemTicker)}
+                        placeholder={intl.formatMessage(messages.cryptoAdressItemTicker)}
+                        value={address.get('ticker')}
+                        onChange={this.handleCryptoAdressItemChange(i, 'ticker', address)}
+                      />
+                      <TextInput
+                        label={intl.formatMessage(messages.cryptoAdressItemAddress)}
+                        placeholder={intl.formatMessage(messages.cryptoAdressItemAddress)}
+                        value={address.get('address')}
+                        onChange={this.handleCryptoAdressItemChange(i, 'address', address)}
+                      />
+                      <TextInput
+                        label={intl.formatMessage(messages.cryptoAdressItemNote)}
+                        placeholder={intl.formatMessage(messages.cryptoAdressItemNote)}
+                        value={address.get('note')}
+                        onChange={this.handleCryptoAdressItemChange(i, 'note', address)}
+                      />
+                      <Icon id='times-circle' onClick={this.handleDeleteItem(['cryptoAddresses', i])} />
+                    </div>
+                  ))
+                }
+                <div className='actions add-row'>
+                  <div name='button' type='button' role='presentation' className='btn button button-secondary' onClick={this.handleAddItem(['cryptoAddresses'], templates.cryptoAddress)}>
+                    <Icon id='plus-circle' />
+                    <FormattedMessage id='soapbox_config.fields.crypto_address.add' defaultMessage='Add new crypto address' />
+                  </div>
+                </div>
+              </div>
+            </FieldsGroup>
+            <FieldsGroup>
+              <SimpleInput
+                type='number'
+                min={0}
+                pattern='[0-9]+'
+                name='cryptoDonatePanelLimit'
+                label={intl.formatMessage(messages.cryptoDonatePanelLimitLabel)}
+                placeholder={intl.formatMessage(messages.cryptoDonatePanelLimitLabel)}
+                value={soapbox.getIn(['cryptoDonatePanel', 'limit'])}
+                onChange={this.handleChange(['cryptoDonatePanel', 'limit'], (e) => Number(e.target.value))}
+              />
+            </FieldsGroup>
             <Accordion
               headline={intl.formatMessage(messages.rawJSONLabel)}
               expanded={this.state.jsonEditorExpanded}
@@ -381,7 +463,7 @@ class ColorPicker extends React.PureComponent {
 
   render() {
     const { style, value, onChange } = this.props;
-    let margin_left_picker = isMobile(window.innerWidth) ? '20px' : '12px';
+    const margin_left_picker = isMobile(window.innerWidth) ? '20px' : '12px';
 
     return (
       <div id='SketchPickerContainer' ref={this.setRef} style={{ ...style, marginLeft: margin_left_picker, position: 'absolute', zIndex: 1000 }}>

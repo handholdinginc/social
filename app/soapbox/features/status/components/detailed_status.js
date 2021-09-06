@@ -14,7 +14,6 @@ import Audio from '../../audio';
 import scheduleIdleTask from '../../ui/util/schedule_idle_task';
 import classNames from 'classnames';
 import Icon from 'soapbox/components/icon';
-import PollContainer from 'soapbox/containers/poll_container';
 import StatusInteractionBar from './status_interaction_bar';
 import { getDomain } from 'soapbox/utils/accounts';
 import HoverRefWrapper from 'soapbox/components/hover_ref_wrapper';
@@ -89,24 +88,22 @@ export default class DetailedStatus extends ImmutablePureComponent {
     const { compact } = this.props;
     const favicon = status.getIn(['account', 'pleroma', 'favicon']);
     const domain = getDomain(status.get('account'));
+    const size = status.get('media_attachments').size;
 
     if (!status) {
       return null;
     }
 
     let media           = '';
-    let poll = '';
+    const poll = '';
     let statusTypeIcon = '';
 
     if (this.props.measureHeight) {
       outerStyle.height = `${this.state.height}px`;
     }
 
-    if (status.get('poll')) {
-      poll = <PollContainer pollId={status.get('poll')} />;
-    }
-    if (status.get('media_attachments').size > 0) {
-      if (status.getIn(['media_attachments', 0, 'type']) === 'video') {
+    if (size > 0) {
+      if (size === 1 && status.getIn(['media_attachments', 0, 'type']) === 'video') {
         const video = status.getIn(['media_attachments', 0]);
 
         media = (
@@ -115,7 +112,7 @@ export default class DetailedStatus extends ImmutablePureComponent {
             blurhash={video.get('blurhash')}
             src={video.get('url')}
             alt={video.get('description')}
-            aspectRatio={video.getIn(['meta', 'small', 'aspect'])}
+            aspectRatio={video.getIn(['meta', 'original', 'aspect'])}
             width={300}
             height={150}
             inline
@@ -125,7 +122,7 @@ export default class DetailedStatus extends ImmutablePureComponent {
             onToggleVisibility={this.props.onToggleMediaVisibility}
           />
         );
-      } else if (status.getIn(['media_attachments', 0, 'type']) === 'audio' && status.get('media_attachments').size === 1) {
+      } else if (size === 1 && status.getIn(['media_attachments', 0, 'type']) === 'audio' && status.get('media_attachments').size === 1) {
         const audio = status.getIn(['media_attachments', 0]);
 
         media = (
@@ -187,7 +184,11 @@ export default class DetailedStatus extends ImmutablePureComponent {
             </div>
           )}
 
-          <StatusContent status={status} expanded={!status.get('hidden')} onExpandedToggle={this.handleExpandedToggle} />
+          <StatusContent
+            status={status}
+            expanded={!status.get('hidden')}
+            onExpandedToggle={this.handleExpandedToggle}
+          />
 
           {media}
           {poll}

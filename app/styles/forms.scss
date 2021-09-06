@@ -479,6 +479,10 @@ code {
     position: relative;
     margin-top: 8px;
     cursor: pointer;
+
+    &:focus {
+      background: var(--accent-color--faint);
+    }
   }
 
   .select-wrapper {
@@ -520,6 +524,11 @@ code {
         border-radius: 4px;
         cursor: pointer;
         outline: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 41px;
+        box-sizing: border-box;
 
         .fa {
           font-size: 18px;
@@ -730,9 +739,14 @@ code {
 
 .input .row > .fa-times-circle {
   position: absolute;
-  right: 7px;
+  right: 15px;
   cursor: pointer;
   color: $error-red;
+  transform: translateY(-9px);
+}
+
+.input .row > .input.with_label + .fa-times-circle {
+  right: 7px;
   transform: translateY(9px);
 }
 
@@ -786,5 +800,30 @@ code {
     &:hover {
       color: var(--primary-text-color);
     }
+  }
+}
+
+.copyable-input {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+
+  input {
+    flex: 1;
+    font-size: 14px !important;
+    border-radius: 4px 0 0 4px !important;
+    height: 100%;
+  }
+
+  button {
+    width: auto;
+    font-size: 14px;
+    margin: 0;
+    border-radius: 0 4px 4px 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }

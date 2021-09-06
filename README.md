@@ -3,6 +3,31 @@
 ![Handholding Social Screenshot](handholding-social-screenshot.png)
 
 **Handholding Social** is a frontend for Pleroma with a focus on custom branding and ease of use. 
+=======
+**Soapbox FE** is a frontend for Pleroma with a focus on custom branding and ease of use.
+It's part of the [Soapbox](https://soapbox.pub) project.
+
+# :rocket: Deploy on Pleroma
+
+Installing Soapbox FE on an existing Pleroma server is extremely easy.
+Just ssh into the server and download a .zip of the latest build:
+
+```sh
+curl -L https://gitlab.com/soapbox-pub/soapbox-fe/-/jobs/artifacts/v1.3.0/download?job=build-production -o soapbox-fe.zip
+```
+
+Then unpack it into Pleroma's `instance` directory:
+
+```sh
+busybox unzip soapbox-fe.zip -o -d /opt/pleroma/instance
+```
+
+**That's it!** :tada:
+**Soapbox FE is installed.**
+The change will take effect immediately, just refresh your browser tab.
+It's not necessary to restart the Pleroma service.
+
+To remove Soapbox FE and revert to the default pleroma-fe, simply `rm /opt/pleroma/instance/static/index.html` (you can delete other stuff in there too, but be careful not to delete your own HTML files).
 
 ## How does it work?
 

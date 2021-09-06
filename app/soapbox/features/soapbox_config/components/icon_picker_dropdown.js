@@ -9,7 +9,7 @@ import Icon from 'soapbox/components/icon';
 
 const messages = defineMessages({
   emoji: { id: 'icon_button.label', defaultMessage: 'Select icon' },
-  emoji_search: { id: 'emoji_button.search', defaultMessage: 'Search...' },
+  emoji_search: { id: 'emoji_button.search', defaultMessage: 'Search…' },
   emoji_not_found: { id: 'icon_button.not_found', defaultMessage: 'No icons!! (╯°□°）╯︵ ┻━┻' },
   custom: { id: 'icon_button.icons', defaultMessage: 'Icons' },
   search_results: { id: 'emoji_button.search_results', defaultMessage: 'Search results' },
@@ -63,6 +63,13 @@ class IconPickerMenu extends React.PureComponent {
 
   setRef = c => {
     this.node = c;
+
+    if (!c) return;
+
+    // Nice and dirty hack to display the icons
+    c.querySelectorAll('button.emoji-mart-emoji > span').forEach(elem => {
+      elem.innerHTML = `<i class="fa fa-${elem.parentNode.getAttribute('title')}"></i>`;
+    });
   }
 
   getI18n = () => {
@@ -99,7 +106,6 @@ class IconPickerMenu extends React.PureComponent {
             emoticons: [],
             keywords: [name],
             imageUrl: '',
-            render: <Icon id={name} />,
           });
         }
       });
@@ -115,7 +121,7 @@ class IconPickerMenu extends React.PureComponent {
       return <div style={{ width: 299 }} />;
     }
 
-    let data = { compressed: true, categories: [], aliases: [], emojis: [] };
+    const data = { compressed: true, categories: [], aliases: [], emojis: [] };
     const title = intl.formatMessage(messages.emoji);
     const { modifierOpen } = this.state;
 
@@ -203,7 +209,7 @@ class IconPickerDropdown extends React.PureComponent {
     const { intl, onPickEmoji, value } = this.props;
     const title = intl.formatMessage(messages.emoji);
     const { active, loading, placement } = this.state;
-    let forkAwesomeIcons = require('../forkawesome.json');
+    const forkAwesomeIcons = require('../forkawesome.json');
 
     return (
       <div className='font-icon-picker-dropdown' onKeyDown={this.handleKeyDown}>

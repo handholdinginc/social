@@ -1,6 +1,7 @@
 import api from '../api';
 import { importFetchedAccount } from './importer';
 import { verifyCredentials } from './auth';
+import { getAuthUserId, getAuthUserUrl } from 'soapbox/utils/auth';
 
 export const ME_FETCH_REQUEST = 'ME_FETCH_REQUEST';
 export const ME_FETCH_SUCCESS = 'ME_FETCH_SUCCESS';
@@ -13,21 +14,33 @@ export const ME_PATCH_FAIL    = 'ME_PATCH_FAIL';
 
 const noOp = () => new Promise(f => f());
 
+const getMeId = state => state.get('me') || getAuthUserId(state);
+
+const getMeUrl = state => {
+  const accountId = getMeId(state);
+  return state.getIn(['accounts', accountId, 'url']) || getAuthUserUrl(state);
+};
+
+const getMeToken = state => {
+  // Fallback for upgrading IDs to URLs
+  const accountUrl = getMeUrl(state) || state.getIn(['auth', 'me']);
+  return state.getIn(['auth', 'users', accountUrl, 'access_token']);
+};
+
 export function fetchMe() {
   return (dispatch, getState) => {
     const state = getState();
-
-    const me = state.get('me') || state.getIn(['auth', 'me']);
-    const token = state.getIn(['auth', 'users', me, 'access_token']);
+    const token = getMeToken(state);
+    const accountUrl = getMeUrl(state);
 
     if (!token) {
       dispatch({ type: ME_FETCH_SKIP }); return noOp();
-    };
+    }
 
     dispatch(fetchMeRequest());
-    return dispatch(verifyCredentials(token)).catch(error => {
+    return dispatch(verifyCredentials(token, accountUrl)).catch(error => {
       dispatch(fetchMeFail(error));
-    });;
+    });
   };
 }
 
@@ -66,7 +79,7 @@ export function fetchMeFail(error) {
     error,
     skipAlert: true,
   };
-};
+}
 
 export function patchMeRequest() {
   return {
@@ -89,4 +102,4 @@ export function patchMeFail(error) {
     type: ME_PATCH_FAIL,
     error,
   };
-};
+}

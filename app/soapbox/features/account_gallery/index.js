@@ -18,7 +18,8 @@ import { openModal } from 'soapbox/actions/modal';
 import { NavLink } from 'react-router-dom';
 import { FormattedMessage } from 'react-intl';
 
-const mapStateToProps = (state, { params: { username }, withReplies = false }) => {
+const mapStateToProps = (state, { params, withReplies = false }) => {
+  const username = params.username || '';
   const me = state.get('me');
   const accounts = state.getIn(['accounts']);
   const accountFetchError = (state.getIn(['accounts', -1, 'username'], '').toLowerCase() === username.toLowerCase());
@@ -28,7 +29,7 @@ const mapStateToProps = (state, { params: { username }, withReplies = false }) =
   if (accountFetchError) {
     accountId = null;
   } else {
-    let account = accounts.find(acct => username.toLowerCase() === acct.getIn(['acct'], '').toLowerCase());
+    const account = accounts.find(acct => username.toLowerCase() === acct.getIn(['acct'], '').toLowerCase());
     accountId = account ? account.getIn(['id'], null) : -1;
     accountUsername = account ? account.getIn(['acct'], '') : '';
   }

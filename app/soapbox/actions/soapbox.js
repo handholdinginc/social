@@ -1,6 +1,7 @@
-import api from '../api';
+import api, { staticClient } from '../api';
 import { Map as ImmutableMap, List as ImmutableList } from 'immutable';
 import { getFeatures } from 'soapbox/utils/features';
+import { createSelector } from 'reselect';
 
 export const SOAPBOX_CONFIG_REQUEST_SUCCESS = 'SOAPBOX_CONFIG_REQUEST_SUCCESS';
 export const SOAPBOX_CONFIG_REQUEST_FAIL    = 'SOAPBOX_CONFIG_REQUEST_FAIL';
@@ -26,39 +27,38 @@ const allowedEmojiRGI = ImmutableList([
 
 const year = new Date().getFullYear();
 
-export const defaultConfig = ImmutableMap({
-  logo: '',
-  banner: '',
-  brandColor: '', // Empty
-  customCss: ImmutableList(),
-  promoPanel: ImmutableMap({
-    items: ImmutableList(),
-  }),
-  extensions: ImmutableMap(),
-  defaultSettings: ImmutableMap(),
-  copyright: `♥${year}. Copying is an act of love. Please copy and share.`,
-  navlinks: ImmutableMap({
-    homeFooter: ImmutableList(),
-  }),
-  allowedEmoji: allowedEmoji,
-  verifiedCanEditName: false,
-  displayFqn: true,
+export const makeDefaultConfig = features => {
+  return ImmutableMap({
+    logo: '',
+    banner: '',
+    brandColor: '', // Empty
+    customCss: ImmutableList(),
+    promoPanel: ImmutableMap({
+      items: ImmutableList(),
+    }),
+    extensions: ImmutableMap(),
+    defaultSettings: ImmutableMap(),
+    copyright: `♥${year}. Copying is an act of love. Please copy and share.`,
+    navlinks: ImmutableMap({
+      homeFooter: ImmutableList(),
+    }),
+    allowedEmoji: features.emojiReactsRGI ? allowedEmojiRGI : allowedEmoji,
+    verifiedCanEditName: false,
+    displayFqn: Boolean(features.federating),
+    cryptoAddresses: ImmutableList(),
+    cryptoDonatePanel: ImmutableMap({
+      limit: 1,
+    }),
+    aboutPages: ImmutableMap(),
+  });
+};
+
+export const getSoapboxConfig = createSelector([
+  state => state.get('soapbox'),
+  state => getFeatures(state.get('instance')),
+], (soapbox, features) => {
+  return makeDefaultConfig(features).merge(soapbox);
 });
-
-export function getSoapboxConfig(state) {
-  const instance = state.get('instance');
-  const soapbox = state.get('soapbox');
-  const features = getFeatures(instance);
-
-  // https://git.pleroma.social/pleroma/pleroma/-/issues/2355
-  if (features.emojiReactsRGI) {
-    return defaultConfig
-      .set('allowedEmoji', allowedEmojiRGI)
-      .merge(soapbox);
-  } else {
-    return defaultConfig.merge(soapbox);
-  }
-}
 
 export function fetchSoapboxConfig() {
   return (dispatch, getState) => {
@@ -76,7 +76,7 @@ export function fetchSoapboxConfig() {
 
 export function fetchSoapboxJson() {
   return (dispatch, getState) => {
-    api(getState).get('/instance/soapbox.json').then(({ data }) => {
+    staticClient.get('/instance/soapbox.json').then(({ data }) => {
       if (!isObject(data)) throw 'soapbox.json failed';
       dispatch(importSoapboxConfig(data));
     }).catch(error => {
@@ -88,7 +88,7 @@ export function fetchSoapboxJson() {
 export function importSoapboxConfig(soapboxConfig) {
   if (!soapboxConfig.brandColor) {
     soapboxConfig.brandColor = '#0482d8';
-  };
+  }
   return {
     type: SOAPBOX_CONFIG_REQUEST_SUCCESS,
     soapboxConfig,

@@ -1,25 +1,33 @@
 import { Map as ImmutableMap } from 'immutable';
 import { List as ImmutableList } from 'immutable';
 
-const guessDomain = account => {
+const getDomainFromURL = account => {
   try {
-    let re = /https?:\/\/(.*?)\//i;
-    return re.exec(account.get('url'))[1];
-  } catch(e) {
-    return null;
+    const url = account.get('url');
+    return new URL(url).host;
+  } catch {
+    return '';
   }
 };
 
 export const getDomain = account => {
-  let domain = account.get('acct').split('@')[1];
-  if (!domain) domain = guessDomain(account);
-  return domain;
+  const domain = account.get('acct').split('@')[1];
+  return domain ? domain : getDomainFromURL(account);
 };
 
 export const guessFqn = account => {
   const [user, domain] = account.get('acct').split('@');
-  if (!domain) return [user, guessDomain(account)].join('@');
+  if (!domain) return [user, getDomainFromURL(account)].join('@');
   return account.get('acct');
+};
+
+export const getBaseURL = account => {
+  try {
+    const url = account.get('url');
+    return new URL(url).origin;
+  } catch {
+    return '';
+  }
 };
 
 // user@domain even for local users
@@ -50,9 +58,11 @@ export const getFollowDifference = (state, accountId, type) => {
 };
 
 export const isLocal = account => {
-  let domain = account.get('acct').split('@')[1];
+  const domain = account.get('acct').split('@')[1];
   return domain === undefined ? true : false;
 };
+
+export const isRemote = account => !isLocal(account);
 
 export const isVerified = account => (
   account.getIn(['pleroma', 'tags'], ImmutableList()).includes('verified')

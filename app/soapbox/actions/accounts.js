@@ -1,7 +1,5 @@
 import api, { getLinks } from '../api';
-import openDB from '../storage/db';
 import {
-  importAccount,
   importFetchedAccount,
   importFetchedAccounts,
   importErrorWhileFetchingAccountByUsername,
@@ -39,6 +37,14 @@ export const ACCOUNT_MUTE_FAIL    = 'ACCOUNT_MUTE_FAIL';
 export const ACCOUNT_UNMUTE_REQUEST = 'ACCOUNT_UNMUTE_REQUEST';
 export const ACCOUNT_UNMUTE_SUCCESS = 'ACCOUNT_UNMUTE_SUCCESS';
 export const ACCOUNT_UNMUTE_FAIL    = 'ACCOUNT_UNMUTE_FAIL';
+
+export const ACCOUNT_SUBSCRIBE_REQUEST = 'ACCOUNT_SUBSCRIBE_REQUEST';
+export const ACCOUNT_SUBSCRIBE_SUCCESS = 'ACCOUNT_SUBSCRIBE_SUCCESS';
+export const ACCOUNT_SUBSCRIBE_FAIL    = 'ACCOUNT_SUBSCRIBE_FAIL';
+
+export const ACCOUNT_UNSUBSCRIBE_REQUEST = 'ACCOUNT_UNSUBSCRIBE_REQUEST';
+export const ACCOUNT_UNSUBSCRIBE_SUCCESS = 'ACCOUNT_UNSUBSCRIBE_SUCCESS';
+export const ACCOUNT_UNSUBSCRIBE_FAIL    = 'ACCOUNT_UNSUBSCRIBE_FAIL';
 
 export const ACCOUNT_PIN_REQUEST = 'ACCOUNT_PIN_REQUEST';
 export const ACCOUNT_PIN_SUCCESS = 'ACCOUNT_PIN_SUCCESS';
@@ -84,23 +90,9 @@ export const FOLLOW_REQUEST_REJECT_REQUEST = 'FOLLOW_REQUEST_REJECT_REQUEST';
 export const FOLLOW_REQUEST_REJECT_SUCCESS = 'FOLLOW_REQUEST_REJECT_SUCCESS';
 export const FOLLOW_REQUEST_REJECT_FAIL    = 'FOLLOW_REQUEST_REJECT_FAIL';
 
-function getFromDB(dispatch, getState, index, id) {
-  return new Promise((resolve, reject) => {
-    const request = index.get(id);
-
-    request.onerror = reject;
-
-    request.onsuccess = () => {
-      if (!request.result) {
-        reject();
-        return;
-      }
-
-      dispatch(importAccount(request.result));
-      resolve(request.result.moved && getFromDB(dispatch, getState, index, request.result.moved));
-    };
-  });
-}
+export const NOTIFICATION_SETTINGS_REQUEST = 'NOTIFICATION_SETTINGS_REQUEST';
+export const NOTIFICATION_SETTINGS_SUCCESS = 'NOTIFICATION_SETTINGS_SUCCESS';
+export const NOTIFICATION_SETTINGS_FAIL    = 'NOTIFICATION_SETTINGS_FAIL';
 
 export function createAccount(params) {
   return (dispatch, getState) => {
@@ -118,55 +110,56 @@ export function fetchAccount(id) {
   return (dispatch, getState) => {
     dispatch(fetchRelationships([id]));
 
-    if (getState().getIn(['accounts', id], null) !== null) {
+    const account = getState().getIn(['accounts', id]);
+
+    if (account && !account.get('should_refetch')) {
       return;
     }
 
     dispatch(fetchAccountRequest(id));
 
-    openDB().then(db => getFromDB(
-      dispatch,
-      getState,
-      db.transaction('accounts', 'read').objectStore('accounts').index('id'),
-      id,
-    ).then(() => db.close(), error => {
-      db.close();
-      throw error;
-    })).catch(() => api(getState).get(`/api/v1/accounts/${id}`).then(response => {
+    api(getState).get(`/api/v1/accounts/${id}`).then(response => {
       dispatch(importFetchedAccount(response.data));
-    })).then(() => {
-      dispatch(fetchAccountSuccess());
+      dispatch(fetchAccountSuccess(response.data));
     }).catch(error => {
       dispatch(fetchAccountFail(id, error));
     });
   };
-};
+}
 
 export function fetchAccountByUsername(username) {
   return (dispatch, getState) => {
+    const account = getState().get('accounts').find(account => account.get('acct') === username);
+
+    if (account) {
+      dispatch(fetchAccount(account.get('id')));
+      return;
+    }
+
     api(getState).get(`/api/v1/accounts/${username}`).then(response => {
+      dispatch(fetchRelationships([response.data.id]));
       dispatch(importFetchedAccount(response.data));
-    }).then(() => {
-      dispatch(fetchAccountSuccess());
+      dispatch(fetchAccountSuccess(response.data));
     }).catch(error => {
       dispatch(fetchAccountFail(null, error));
       dispatch(importErrorWhileFetchingAccountByUsername(username));
     });
   };
-};
+}
 
 export function fetchAccountRequest(id) {
   return {
     type: ACCOUNT_FETCH_REQUEST,
     id,
   };
-};
+}
 
-export function fetchAccountSuccess() {
+export function fetchAccountSuccess(account) {
   return {
     type: ACCOUNT_FETCH_SUCCESS,
+    account,
   };
-};
+}
 
 export function fetchAccountFail(id, error) {
   return {
@@ -175,7 +168,7 @@ export function fetchAccountFail(id, error) {
     error,
     skipAlert: true,
   };
-};
+}
 
 export function followAccount(id, reblogs = true) {
   return (dispatch, getState) => {
@@ -192,7 +185,7 @@ export function followAccount(id, reblogs = true) {
       dispatch(followAccountFail(error, locked));
     });
   };
-};
+}
 
 export function unfollowAccount(id) {
   return (dispatch, getState) => {
@@ -206,7 +199,7 @@ export function unfollowAccount(id) {
       dispatch(unfollowAccountFail(error));
     });
   };
-};
+}
 
 export function followAccountRequest(id, locked) {
   return {
@@ -215,7 +208,7 @@ export function followAccountRequest(id, locked) {
     locked,
     skipLoading: true,
   };
-};
+}
 
 export function followAccountSuccess(relationship, alreadyFollowing) {
   return {
@@ -224,7 +217,7 @@ export function followAccountSuccess(relationship, alreadyFollowing) {
     alreadyFollowing,
     skipLoading: true,
   };
-};
+}
 
 export function followAccountFail(error, locked) {
   return {
@@ -233,7 +226,7 @@ export function followAccountFail(error, locked) {
     locked,
     skipLoading: true,
   };
-};
+}
 
 export function unfollowAccountRequest(id) {
   return {
@@ -241,7 +234,7 @@ export function unfollowAccountRequest(id) {
     id,
     skipLoading: true,
   };
-};
+}
 
 export function unfollowAccountSuccess(relationship, statuses) {
   return {
@@ -250,7 +243,7 @@ export function unfollowAccountSuccess(relationship, statuses) {
     statuses,
     skipLoading: true,
   };
-};
+}
 
 export function unfollowAccountFail(error) {
   return {
@@ -258,7 +251,7 @@ export function unfollowAccountFail(error) {
     error,
     skipLoading: true,
   };
-};
+}
 
 export function blockAccount(id) {
   return (dispatch, getState) => {
@@ -273,7 +266,7 @@ export function blockAccount(id) {
       dispatch(blockAccountFail(id, error));
     });
   };
-};
+}
 
 export function unblockAccount(id) {
   return (dispatch, getState) => {
@@ -287,14 +280,14 @@ export function unblockAccount(id) {
       dispatch(unblockAccountFail(id, error));
     });
   };
-};
+}
 
 export function blockAccountRequest(id) {
   return {
     type: ACCOUNT_BLOCK_REQUEST,
     id,
   };
-};
+}
 
 export function blockAccountSuccess(relationship, statuses) {
   return {
@@ -302,35 +295,35 @@ export function blockAccountSuccess(relationship, statuses) {
     relationship,
     statuses,
   };
-};
+}
 
 export function blockAccountFail(error) {
   return {
     type: ACCOUNT_BLOCK_FAIL,
     error,
   };
-};
+}
 
 export function unblockAccountRequest(id) {
   return {
     type: ACCOUNT_UNBLOCK_REQUEST,
     id,
   };
-};
+}
 
 export function unblockAccountSuccess(relationship) {
   return {
     type: ACCOUNT_UNBLOCK_SUCCESS,
     relationship,
   };
-};
+}
 
 export function unblockAccountFail(error) {
   return {
     type: ACCOUNT_UNBLOCK_FAIL,
     error,
   };
-};
+}
 
 
 export function muteAccount(id, notifications) {
@@ -346,7 +339,7 @@ export function muteAccount(id, notifications) {
       dispatch(muteAccountFail(id, error));
     });
   };
-};
+}
 
 export function unmuteAccount(id) {
   return (dispatch, getState) => {
@@ -360,14 +353,14 @@ export function unmuteAccount(id) {
       dispatch(unmuteAccountFail(id, error));
     });
   };
-};
+}
 
 export function muteAccountRequest(id) {
   return {
     type: ACCOUNT_MUTE_REQUEST,
     id,
   };
-};
+}
 
 export function muteAccountSuccess(relationship, statuses) {
   return {
@@ -375,36 +368,106 @@ export function muteAccountSuccess(relationship, statuses) {
     relationship,
     statuses,
   };
-};
+}
 
 export function muteAccountFail(error) {
   return {
     type: ACCOUNT_MUTE_FAIL,
     error,
   };
-};
+}
 
 export function unmuteAccountRequest(id) {
   return {
     type: ACCOUNT_UNMUTE_REQUEST,
     id,
   };
-};
+}
 
 export function unmuteAccountSuccess(relationship) {
   return {
     type: ACCOUNT_UNMUTE_SUCCESS,
     relationship,
   };
-};
+}
 
 export function unmuteAccountFail(error) {
   return {
     type: ACCOUNT_UNMUTE_FAIL,
     error,
   };
-};
+}
 
+
+export function subscribeAccount(id, notifications) {
+  return (dispatch, getState) => {
+    if (!isLoggedIn(getState)) return;
+
+    dispatch(subscribeAccountRequest(id));
+
+    api(getState).post(`/api/v1/pleroma/accounts/${id}/subscribe`, { notifications }).then(response => {
+      dispatch(subscribeAccountSuccess(response.data));
+    }).catch(error => {
+      dispatch(subscribeAccountFail(id, error));
+    });
+  };
+}
+
+export function unsubscribeAccount(id) {
+  return (dispatch, getState) => {
+    if (!isLoggedIn(getState)) return;
+
+    dispatch(unsubscribeAccountRequest(id));
+
+    api(getState).post(`/api/v1/pleroma/accounts/${id}/unsubscribe`).then(response => {
+      dispatch(unsubscribeAccountSuccess(response.data));
+    }).catch(error => {
+      dispatch(unsubscribeAccountFail(id, error));
+    });
+  };
+}
+
+export function subscribeAccountRequest(id) {
+  return {
+    type: ACCOUNT_SUBSCRIBE_REQUEST,
+    id,
+  };
+}
+
+export function subscribeAccountSuccess(relationship) {
+  return {
+    type: ACCOUNT_SUBSCRIBE_SUCCESS,
+    relationship,
+  };
+}
+
+export function subscribeAccountFail(error) {
+  return {
+    type: ACCOUNT_SUBSCRIBE_FAIL,
+    error,
+  };
+}
+
+export function unsubscribeAccountRequest(id) {
+  return {
+    type: ACCOUNT_UNSUBSCRIBE_REQUEST,
+    id,
+  };
+}
+
+export function unsubscribeAccountSuccess(relationship) {
+  return {
+    type: ACCOUNT_UNSUBSCRIBE_SUCCESS,
+    relationship,
+  };
+}
+
+export function unsubscribeAccountFail(error) {
+  return {
+    type: ACCOUNT_UNSUBSCRIBE_FAIL,
+    error,
+  };
+}
 
 export function fetchFollowers(id) {
   return (dispatch, getState) => {
@@ -422,14 +485,14 @@ export function fetchFollowers(id) {
       dispatch(fetchFollowersFail(id, error));
     });
   };
-};
+}
 
 export function fetchFollowersRequest(id) {
   return {
     type: FOLLOWERS_FETCH_REQUEST,
     id,
   };
-};
+}
 
 export function fetchFollowersSuccess(id, accounts, next) {
   return {
@@ -438,7 +501,7 @@ export function fetchFollowersSuccess(id, accounts, next) {
     accounts,
     next,
   };
-};
+}
 
 export function fetchFollowersFail(id, error) {
   return {
@@ -446,7 +509,7 @@ export function fetchFollowersFail(id, error) {
     id,
     error,
   };
-};
+}
 
 export function expandFollowers(id) {
   return (dispatch, getState) => {
@@ -470,14 +533,14 @@ export function expandFollowers(id) {
       dispatch(expandFollowersFail(id, error));
     });
   };
-};
+}
 
 export function expandFollowersRequest(id) {
   return {
     type: FOLLOWERS_EXPAND_REQUEST,
     id,
   };
-};
+}
 
 export function expandFollowersSuccess(id, accounts, next) {
   return {
@@ -486,7 +549,7 @@ export function expandFollowersSuccess(id, accounts, next) {
     accounts,
     next,
   };
-};
+}
 
 export function expandFollowersFail(id, error) {
   return {
@@ -494,7 +557,7 @@ export function expandFollowersFail(id, error) {
     id,
     error,
   };
-};
+}
 
 export function fetchFollowing(id) {
   return (dispatch, getState) => {
@@ -512,14 +575,14 @@ export function fetchFollowing(id) {
       dispatch(fetchFollowingFail(id, error));
     });
   };
-};
+}
 
 export function fetchFollowingRequest(id) {
   return {
     type: FOLLOWING_FETCH_REQUEST,
     id,
   };
-};
+}
 
 export function fetchFollowingSuccess(id, accounts, next) {
   return {
@@ -528,7 +591,7 @@ export function fetchFollowingSuccess(id, accounts, next) {
     accounts,
     next,
   };
-};
+}
 
 export function fetchFollowingFail(id, error) {
   return {
@@ -536,7 +599,7 @@ export function fetchFollowingFail(id, error) {
     id,
     error,
   };
-};
+}
 
 export function expandFollowing(id) {
   return (dispatch, getState) => {
@@ -560,14 +623,14 @@ export function expandFollowing(id) {
       dispatch(expandFollowingFail(id, error));
     });
   };
-};
+}
 
 export function expandFollowingRequest(id) {
   return {
     type: FOLLOWING_EXPAND_REQUEST,
     id,
   };
-};
+}
 
 export function expandFollowingSuccess(id, accounts, next) {
   return {
@@ -576,7 +639,7 @@ export function expandFollowingSuccess(id, accounts, next) {
     accounts,
     next,
   };
-};
+}
 
 export function expandFollowingFail(id, error) {
   return {
@@ -584,7 +647,7 @@ export function expandFollowingFail(id, error) {
     id,
     error,
   };
-};
+}
 
 export function fetchRelationships(accountIds) {
   return (dispatch, getState) => {
@@ -605,7 +668,7 @@ export function fetchRelationships(accountIds) {
       dispatch(fetchRelationshipsFail(error));
     });
   };
-};
+}
 
 export function fetchRelationshipsRequest(ids) {
   return {
@@ -613,7 +676,7 @@ export function fetchRelationshipsRequest(ids) {
     ids,
     skipLoading: true,
   };
-};
+}
 
 export function fetchRelationshipsSuccess(relationships) {
   return {
@@ -621,7 +684,7 @@ export function fetchRelationshipsSuccess(relationships) {
     relationships,
     skipLoading: true,
   };
-};
+}
 
 export function fetchRelationshipsFail(error) {
   return {
@@ -629,7 +692,7 @@ export function fetchRelationshipsFail(error) {
     error,
     skipLoading: true,
   };
-};
+}
 
 export function fetchFollowRequests() {
   return (dispatch, getState) => {
@@ -643,13 +706,13 @@ export function fetchFollowRequests() {
       dispatch(fetchFollowRequestsSuccess(response.data, next ? next.uri : null));
     }).catch(error => dispatch(fetchFollowRequestsFail(error)));
   };
-};
+}
 
 export function fetchFollowRequestsRequest() {
   return {
     type: FOLLOW_REQUESTS_FETCH_REQUEST,
   };
-};
+}
 
 export function fetchFollowRequestsSuccess(accounts, next) {
   return {
@@ -657,14 +720,14 @@ export function fetchFollowRequestsSuccess(accounts, next) {
     accounts,
     next,
   };
-};
+}
 
 export function fetchFollowRequestsFail(error) {
   return {
     type: FOLLOW_REQUESTS_FETCH_FAIL,
     error,
   };
-};
+}
 
 export function expandFollowRequests() {
   return (dispatch, getState) => {
@@ -684,13 +747,13 @@ export function expandFollowRequests() {
       dispatch(expandFollowRequestsSuccess(response.data, next ? next.uri : null));
     }).catch(error => dispatch(expandFollowRequestsFail(error)));
   };
-};
+}
 
 export function expandFollowRequestsRequest() {
   return {
     type: FOLLOW_REQUESTS_EXPAND_REQUEST,
   };
-};
+}
 
 export function expandFollowRequestsSuccess(accounts, next) {
   return {
@@ -698,14 +761,14 @@ export function expandFollowRequestsSuccess(accounts, next) {
     accounts,
     next,
   };
-};
+}
 
 export function expandFollowRequestsFail(error) {
   return {
     type: FOLLOW_REQUESTS_EXPAND_FAIL,
     error,
   };
-};
+}
 
 export function authorizeFollowRequest(id) {
   return (dispatch, getState) => {
@@ -718,21 +781,21 @@ export function authorizeFollowRequest(id) {
       .then(() => dispatch(authorizeFollowRequestSuccess(id)))
       .catch(error => dispatch(authorizeFollowRequestFail(id, error)));
   };
-};
+}
 
 export function authorizeFollowRequestRequest(id) {
   return {
     type: FOLLOW_REQUEST_AUTHORIZE_REQUEST,
     id,
   };
-};
+}
 
 export function authorizeFollowRequestSuccess(id) {
   return {
     type: FOLLOW_REQUEST_AUTHORIZE_SUCCESS,
     id,
   };
-};
+}
 
 export function authorizeFollowRequestFail(id, error) {
   return {
@@ -740,7 +803,7 @@ export function authorizeFollowRequestFail(id, error) {
     id,
     error,
   };
-};
+}
 
 
 export function rejectFollowRequest(id) {
@@ -754,21 +817,21 @@ export function rejectFollowRequest(id) {
       .then(() => dispatch(rejectFollowRequestSuccess(id)))
       .catch(error => dispatch(rejectFollowRequestFail(id, error)));
   };
-};
+}
 
 export function rejectFollowRequestRequest(id) {
   return {
     type: FOLLOW_REQUEST_REJECT_REQUEST,
     id,
   };
-};
+}
 
 export function rejectFollowRequestSuccess(id) {
   return {
     type: FOLLOW_REQUEST_REJECT_SUCCESS,
     id,
   };
-};
+}
 
 export function rejectFollowRequestFail(id, error) {
   return {
@@ -776,7 +839,7 @@ export function rejectFollowRequestFail(id, error) {
     id,
     error,
   };
-};
+}
 
 export function pinAccount(id) {
   return (dispatch, getState) => {
@@ -790,7 +853,7 @@ export function pinAccount(id) {
       dispatch(pinAccountFail(error));
     });
   };
-};
+}
 
 export function unpinAccount(id) {
   return (dispatch, getState) => {
@@ -804,46 +867,57 @@ export function unpinAccount(id) {
       dispatch(unpinAccountFail(error));
     });
   };
-};
+}
+
+export function updateNotificationSettings(params) {
+  return (dispatch, getState) => {
+    dispatch({ type: NOTIFICATION_SETTINGS_REQUEST, params });
+    return api(getState).put('/api/pleroma/notification_settings', params).then(({ data }) => {
+      dispatch({ type: NOTIFICATION_SETTINGS_SUCCESS, params, data });
+    }).catch(error => {
+      dispatch({ type: NOTIFICATION_SETTINGS_FAIL, params, error });
+    });
+  };
+}
 
 export function pinAccountRequest(id) {
   return {
     type: ACCOUNT_PIN_REQUEST,
     id,
   };
-};
+}
 
 export function pinAccountSuccess(relationship) {
   return {
     type: ACCOUNT_PIN_SUCCESS,
     relationship,
   };
-};
+}
 
 export function pinAccountFail(error) {
   return {
     type: ACCOUNT_PIN_FAIL,
     error,
   };
-};
+}
 
 export function unpinAccountRequest(id) {
   return {
     type: ACCOUNT_UNPIN_REQUEST,
     id,
   };
-};
+}
 
 export function unpinAccountSuccess(relationship) {
   return {
     type: ACCOUNT_UNPIN_SUCCESS,
     relationship,
   };
-};
+}
 
 export function unpinAccountFail(error) {
   return {
     type: ACCOUNT_UNPIN_FAIL,
     error,
   };
-};
+}

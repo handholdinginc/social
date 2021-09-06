@@ -44,6 +44,7 @@ const notificationToMap = notification => ImmutableMap({
   id: notification.id,
   type: notification.type,
   account: notification.account.id,
+  target: notification.target ? notification.target.id : null,
   created_at: notification.created_at,
   status: notification.status ? notification.status.id : null,
   emoji: notification.emoji,
@@ -53,6 +54,9 @@ const notificationToMap = notification => ImmutableMap({
 
 // https://gitlab.com/soapbox-pub/soapbox-fe/-/issues/424
 const isValid = notification => Boolean(notification.account.id);
+
+const countUnseen = notifications => notifications.reduce((acc, cur) =>
+  get(cur, ['pleroma', 'is_seen'], false) === false ? acc + 1 : acc, 0);
 
 const normalizeNotification = (state, notification) => {
   const top = state.get('top');
@@ -77,12 +81,16 @@ const processRawNotifications = notifications => (
 
 const expandNormalizedNotifications = (state, notifications, next) => {
   const items = processRawNotifications(notifications);
+  const unread = state.get('unread');
+  const legacyUnread = countUnseen(notifications);
 
   return state.withMutations(mutable => {
     mutable.update('items', map => map.merge(items).sort(comparator));
 
     if (!next) mutable.set('hasMore', false);
     mutable.set('isLoading', false);
+
+    mutable.set('unread', Math.max(legacyUnread, unread));
   });
 };
 
@@ -112,7 +120,7 @@ const updateNotificationsQueue = (state, notification, intlMessages, intlLocale)
   const alreadyExists = queuedNotifications.has(notification.id) || listedNotifications.has(notification.id);
   if (alreadyExists) return state;
 
-  let newQueuedNotifications = queuedNotifications;
+  const newQueuedNotifications = queuedNotifications;
 
   return state.withMutations(mutable => {
     if (totalQueuedNotificationsCount <= MAX_QUEUED_NOTIFICATIONS) {
@@ -125,9 +133,6 @@ const updateNotificationsQueue = (state, notification, intlMessages, intlLocale)
     mutable.set('totalQueuedNotificationsCount', totalQueuedNotificationsCount + 1);
   });
 };
-
-const countUnseen = notifications => notifications.reduce((acc, cur) =>
-  get(cur, ['pleroma', 'is_seen'], false) === false ? acc + 1 : acc, 0);
 
 export default function notifications(state = initialState, action) {
   switch(action.type) {
@@ -149,9 +154,7 @@ export default function notifications(state = initialState, action) {
       mutable.set('totalQueuedNotificationsCount', 0);
     });
   case NOTIFICATIONS_EXPAND_SUCCESS:
-    const legacyUnread = countUnseen(action.notifications);
-    return expandNormalizedNotifications(state, action.notifications, action.next)
-      .merge({ unread: Math.max(legacyUnread, state.get('unread')) });
+    return expandNormalizedNotifications(state, action.notifications, action.next);
   case ACCOUNT_BLOCK_SUCCESS:
     return filterNotifications(state, action.relationship);
   case ACCOUNT_MUTE_SUCCESS:
@@ -178,4 +181,4 @@ export default function notifications(state = initialState, action) {
   default:
     return state;
   }
-};
+}

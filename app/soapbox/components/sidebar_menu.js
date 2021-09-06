@@ -5,19 +5,20 @@ import { throttle } from 'lodash';
 import { Link, NavLink } from 'react-router-dom';
 import ImmutablePropTypes from 'react-immutable-proptypes';
 import ImmutablePureComponent from 'react-immutable-pure-component';
-import { injectIntl, defineMessages } from 'react-intl';
+import { injectIntl, defineMessages, FormattedMessage } from 'react-intl';
 import classNames from 'classnames';
 import Avatar from './avatar';
 import IconButton from './icon_button';
 import Icon from './icon';
 import DisplayName from './display_name';
 import { closeSidebar } from '../actions/sidebar';
-import { isStaff } from '../utils/accounts';
-import { makeGetAccount } from '../selectors';
+import { isAdmin } from '../utils/accounts';
+import { makeGetAccount, makeGetOtherAccounts } from '../selectors';
 import { logOut, switchAccount } from 'soapbox/actions/auth';
 import ThemeToggle from '../features/ui/components/theme_toggle_container';
 import { fetchOwnAccounts } from 'soapbox/actions/auth';
-import { List as ImmutableList, is as ImmutableIs } from 'immutable';
+import { is as ImmutableIs } from 'immutable';
+import { getSoapboxConfig } from 'soapbox/actions/soapbox';
 
 const messages = defineMessages({
   followers: { id: 'account.followers', defaultMessage: 'Followers' },
@@ -32,46 +33,46 @@ const messages = defineMessages({
   admin_settings: { id: 'navigation_bar.admin_settings', defaultMessage: 'Admin settings' },
   soapbox_config: { id: 'navigation_bar.soapbox_config', defaultMessage: 'Soapbox config' },
   import_data: { id: 'navigation_bar.import_data', defaultMessage: 'Import data' },
+  account_aliases: { id: 'navigation_bar.account_aliases', defaultMessage: 'Account aliases' },
   security: { id: 'navigation_bar.security', defaultMessage: 'Security' },
   logout: { id: 'navigation_bar.logout', defaultMessage: 'Logout' },
   lists: { id: 'column.lists', defaultMessage: 'Lists' },
   bookmarks: { id: 'column.bookmarks', defaultMessage: 'Bookmarks' },
+  header: { id: 'tabs_bar.header', defaultMessage: 'Account Info' },
   apps: { id: 'tabs_bar.apps', defaultMessage: 'Apps' },
   news: { id: 'tabs_bar.news', defaultMessage: 'News' },
   donate: { id: 'donate', defaultMessage: 'Donate' },
+  donate_crypto: { id: 'donate_crypto', defaultMessage: 'Donate cryptocurrency' },
   info: { id: 'column.info', defaultMessage: 'Server information' },
   add_account: { id: 'profile_dropdown.add_account', defaultMessage: 'Add an existing account' },
 });
 
-const mapStateToProps = state => {
-  const me = state.get('me');
+const makeMapStateToProps = () => {
   const getAccount = makeGetAccount();
+  const getOtherAccounts = makeGetOtherAccounts();
 
-  const otherAccounts =
-    state
-      .getIn(['auth', 'users'])
-      .keySeq()
-      .reduce((list, id) => {
-        if (id === me) return list;
-        const account = state.getIn(['accounts', id]);
-        return account ? list.push(account) : list;
-      }, ImmutableList());
+  const mapStateToProps = state => {
+    const me = state.get('me');
+    const soapbox = getSoapboxConfig(state);
 
-  return {
-    account: getAccount(state, me),
-    sidebarOpen: state.get('sidebar').sidebarOpen,
-    donateUrl: state.getIn(['patron', 'instance', 'url']),
-    isStaff: isStaff(state.getIn(['accounts', me])),
-    otherAccounts,
+    return {
+      account: getAccount(state, me),
+      sidebarOpen: state.get('sidebar').sidebarOpen,
+      donateUrl: state.getIn(['patron', 'instance', 'url']),
+      hasCrypto: typeof soapbox.getIn(['cryptoAddresses', 0, 'ticker']) === 'string',
+      otherAccounts: getOtherAccounts(state),
+    };
   };
+
+  return mapStateToProps;
 };
 
-const mapDispatchToProps = (dispatch) => ({
+const mapDispatchToProps = (dispatch, { intl }) => ({
   onClose() {
     dispatch(closeSidebar());
   },
   onClickLogOut(e) {
-    dispatch(logOut());
+    dispatch(logOut(intl));
     e.preventDefault();
   },
   fetchOwnAccounts() {
@@ -82,7 +83,7 @@ const mapDispatchToProps = (dispatch) => ({
   },
 });
 
-export default @connect(mapStateToProps, mapDispatchToProps)
+export default @connect(makeMapStateToProps, mapDispatchToProps)
 @injectIntl
 class SidebarMenu extends ImmutablePureComponent {
 
@@ -92,12 +93,7 @@ class SidebarMenu extends ImmutablePureComponent {
     otherAccounts: ImmutablePropTypes.list,
     sidebarOpen: PropTypes.bool,
     onClose: PropTypes.func.isRequired,
-    isStaff: PropTypes.bool.isRequired,
   };
-
-  static defaultProps = {
-    isStaff: false,
-  }
 
   state = {
     switcher: false,
@@ -153,7 +149,7 @@ class SidebarMenu extends ImmutablePureComponent {
   }
 
   render() {
-    const { sidebarOpen, intl, account, onClickLogOut, donateUrl, isStaff, otherAccounts } = this.props;
+    const { sidebarOpen, intl, account, onClickLogOut, donateUrl, otherAccounts, hasCrypto } = this.props;
     const { switcher } = this.state;
     if (!account) return null;
     const acct = account.get('acct');
@@ -168,7 +164,9 @@ class SidebarMenu extends ImmutablePureComponent {
         <div className='sidebar-menu'>
 
           <div className='sidebar-menu-header'>
-            <span className='sidebar-menu-header__title'>Account Info</span>
+            <span className='sidebar-menu-header__title'>
+              <FormattedMessage id='tabs_bar.header' defaultMessage='Account Info' />
+            </span>
             <IconButton title='close' onClick={this.handleClose} icon='close' className='sidebar-menu-header__btn' />
           </div>
 
@@ -206,12 +204,14 @@ class SidebarMenu extends ImmutablePureComponent {
                 <Icon id='user' />
                 <span className='sidebar-menu-item__title'>{intl.formatMessage(messages.profile)}</span>
               </NavLink>
-              {donateUrl ?
-                <a className='sidebar-menu-item' href={donateUrl} onClick={this.handleClose}>
-                  <Icon id='dollar' />
-                  <span className='sidebar-menu-item__title'>{intl.formatMessage(messages.donate)}</span>
-                </a>
-                : ''}
+              {donateUrl && <a className='sidebar-menu-item' href={donateUrl} onClick={this.handleClose}>
+                <Icon id='dollar' />
+                <span className='sidebar-menu-item__title'>{intl.formatMessage(messages.donate)}</span>
+              </a>}
+              {hasCrypto && <NavLink className='sidebar-menu-item' to='/donate/crypto' onClick={this.handleClose}>
+                <Icon id='bitcoin' />
+                <span className='sidebar-menu-item__title'>{intl.formatMessage(messages.donate_crypto)}</span>
+              </NavLink>}
               <NavLink className='sidebar-menu-item' to='/lists' onClick={this.handleClose}>
                 <Icon id='list' />
                 <span className='sidebar-menu-item__title'>{intl.formatMessage(messages.lists)}</span>
@@ -243,14 +243,14 @@ class SidebarMenu extends ImmutablePureComponent {
                 <Icon id='filter' />
                 <span className='sidebar-menu-item__title'>{intl.formatMessage(messages.filters)}</span>
               </NavLink>
-              { isStaff && <a className='sidebar-menu-item' href='/pleroma/admin' target='_blank' onClick={this.handleClose}>
+              {isAdmin(account) && <a className='sidebar-menu-item' href='/pleroma/admin' target='_blank' onClick={this.handleClose}>
                 <Icon id='shield' />
                 <span className='sidebar-menu-item__title'>{intl.formatMessage(messages.admin_settings)}</span>
-              </a> }
-              { isStaff && <NavLink className='sidebar-menu-item' to='/soapbox/config' onClick={this.handleClose}>
+              </a>}
+              {isAdmin(account) && <NavLink className='sidebar-menu-item' to='/soapbox/config' onClick={this.handleClose}>
                 <Icon id='cog' />
                 <span className='sidebar-menu-item__title'>{intl.formatMessage(messages.soapbox_config)}</span>
-              </NavLink> }
+              </NavLink>}
               <NavLink className='sidebar-menu-item' to='/settings/preferences' onClick={this.handleClose}>
                 <Icon id='cog' />
                 <span className='sidebar-menu-item__title'>{intl.formatMessage(messages.preferences)}</span>
@@ -258,6 +258,10 @@ class SidebarMenu extends ImmutablePureComponent {
               <NavLink className='sidebar-menu-item' to='/settings/import' onClick={this.handleClose}>
                 <Icon id='cloud-upload' />
                 <span className='sidebar-menu-item__title'>{intl.formatMessage(messages.import_data)}</span>
+              </NavLink>
+              <NavLink className='sidebar-menu-item' to='/settings/aliases' onClick={this.handleClose}>
+                <Icon id='suitcase' />
+                <span className='sidebar-menu-item__title'>{intl.formatMessage(messages.account_aliases)}</span>
               </NavLink>
               <NavLink className='sidebar-menu-item' to='/auth/edit' onClick={this.handleClose}>
                 <Icon id='lock' />

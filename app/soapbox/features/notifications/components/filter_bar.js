@@ -9,7 +9,8 @@ const tooltips = defineMessages({
   boosts: { id: 'notifications.filter.boosts', defaultMessage: 'Reposts' },
   polls: { id: 'notifications.filter.polls', defaultMessage: 'Poll results' },
   follows: { id: 'notifications.filter.follows', defaultMessage: 'Follows' },
-  emoji_reacts: { id: 'notifications.filter.emoji_reacts', defaultMessage: 'Emoji reacts:' },
+  moves: { id: 'notifications.filter.moves', defaultMessage: 'Moves' },
+  emoji_reacts: { id: 'notifications.filter.emoji_reacts', defaultMessage: 'Emoji reacts' },
 });
 
 export default @injectIntl
@@ -19,6 +20,7 @@ class FilterBar extends React.PureComponent {
     selectFilter: PropTypes.func.isRequired,
     selectedFilter: PropTypes.string.isRequired,
     advancedMode: PropTypes.bool.isRequired,
+    supportsEmojiReacts: PropTypes.bool,
     intl: PropTypes.object.isRequired,
   };
 
@@ -27,7 +29,7 @@ class FilterBar extends React.PureComponent {
   }
 
   render() {
-    const { selectedFilter, advancedMode, intl } = this.props;
+    const { selectedFilter, advancedMode, supportsEmojiReacts, intl } = this.props;
     const renderedElement = !advancedMode ? (
       <div className='notification__filter-bar'>
         <button
@@ -72,15 +74,15 @@ class FilterBar extends React.PureComponent {
           onClick={this.onClick('favourite')}
           title={intl.formatMessage(tooltips.favourites)}
         >
-          <Icon id='star' fixedWidth />
+          <Icon id='thumbs-up' fixedWidth />
         </button>
-        <button
+        {supportsEmojiReacts && <button
           className={selectedFilter === 'pleroma:emoji_reaction' ? 'active' : ''}
           onClick={this.onClick('pleroma:emoji_reaction')}
-          title={intl.formatMessage(tooltips.favourites)}
+          title={intl.formatMessage(tooltips.emoji_reacts)}
         >
-          <Icon id='star' fixedWidth />
-        </button>
+          <Icon id='smile-o' fixedWidth />
+        </button>}
         <button
           className={selectedFilter === 'reblog' ? 'active' : ''}
           onClick={this.onClick('reblog')}
@@ -101,6 +103,13 @@ class FilterBar extends React.PureComponent {
           title={intl.formatMessage(tooltips.follows)}
         >
           <Icon id='user-plus' fixedWidth />
+        </button>
+        <button
+          className={selectedFilter === 'move' ? 'active' : ''}
+          onClick={this.onClick('move')}
+          title={intl.formatMessage(tooltips.moves)}
+        >
+          <Icon id='suitcase' fixedWidth />
         </button>
       </div>
     );

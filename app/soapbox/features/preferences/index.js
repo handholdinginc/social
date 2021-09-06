@@ -15,7 +15,7 @@ import {
 } from 'soapbox/features/forms';
 import SettingsCheckbox from 'soapbox/components/settings_checkbox';
 
-const languages = {
+export const languages = {
   en: 'English',
   ar: 'العربية',
   ast: 'Asturianu',
@@ -202,6 +202,10 @@ class Preferences extends ImmutablePureComponent {
               label={<FormattedMessage id='preferences.fields.delete_modal_label' defaultMessage='Show confirmation dialog before deleting a post' />}
               path={['deleteModal']}
             />
+            <SettingsCheckbox
+              label={<FormattedMessage id='preferences.fields.missing_description_modal_label' defaultMessage='Show confirmation dialog before sending a post without media descriptions' />}
+              path={['missingDescriptionModal']}
+            />
           </FieldsGroup>
 
           <FieldsGroup>
@@ -216,6 +220,10 @@ class Preferences extends ImmutablePureComponent {
             <SettingsCheckbox
               label={<FormattedMessage id='preferences.fields.reduce_motion_label' defaultMessage='Reduce motion in animations' />}
               path={['reduceMotion']}
+            />
+            <SettingsCheckbox
+              label={<FormattedMessage id='preferences.fields.underline_links_label' defaultMessage='Always underline links in posts' />}
+              path={['underlineLinks']}
             />
             <SettingsCheckbox
               label={<FormattedMessage id='preferences.fields.system_font_label' defaultMessage="Use system's default font" />}

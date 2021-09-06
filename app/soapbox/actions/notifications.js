@@ -56,13 +56,20 @@ export function updateNotifications(notification, intlMessages, intlLocale) {
   return (dispatch, getState) => {
     const showInColumn = getSettings(getState()).getIn(['notifications', 'shows', notification.type], true);
 
-    if (showInColumn) {
+    if (notification.account) {
       dispatch(importFetchedAccount(notification.account));
+    }
 
-      if (notification.status) {
-        dispatch(importFetchedStatus(notification.status));
-      }
+    // Used by Move notification
+    if (notification.target) {
+      dispatch(importFetchedAccount(notification.target));
+    }
 
+    if (notification.status) {
+      dispatch(importFetchedStatus(notification.status));
+    }
+
+    if (showInColumn) {
       dispatch({
         type: NOTIFICATIONS_UPDATE,
         notification,
@@ -71,7 +78,7 @@ export function updateNotifications(notification, intlMessages, intlLocale) {
       fetchRelatedRelationships(dispatch, [notification]);
     }
   };
-};
+}
 
 export function updateNotificationsQueue(notification, intlMessages, intlLocale, curPath) {
   return (dispatch, getState) => {
@@ -92,16 +99,20 @@ export function updateNotificationsQueue(notification, intlMessages, intlLocale,
     }
 
     // Desktop notifications
-    if (typeof window.Notification !== 'undefined' && showAlert && !filtered) {
-      const title = new IntlMessageFormat(intlMessages[`notification.${notification.type}`], intlLocale).format({ name: notification.account.display_name.length > 0 ? notification.account.display_name : notification.account.username });
-      const body = (notification.status && notification.status.spoiler_text.length > 0) ? notification.status.spoiler_text : unescapeHTML(notification.status ? notification.status.content : '');
+    try {
+      if (typeof window.Notification !== 'undefined' && showAlert && !filtered) {
+        const title = new IntlMessageFormat(intlMessages[`notification.${notification.type}`], intlLocale).format({ name: notification.account.display_name.length > 0 ? notification.account.display_name : notification.account.username });
+        const body = (notification.status && notification.status.spoiler_text.length > 0) ? notification.status.spoiler_text : unescapeHTML(notification.status ? notification.status.content : '');
 
-      const notify = new Notification(title, { body, icon: notification.account.avatar, tag: notification.id });
+        const notify = new Notification(title, { body, icon: notification.account.avatar, tag: notification.id });
 
-      notify.addEventListener('click', () => {
-        window.focus();
-        notify.close();
-      });
+        notify.addEventListener('click', () => {
+          window.focus();
+          notify.close();
+        });
+      }
+    } catch(e) {
+      console.warn(e);
     }
 
     if (playSound && !filtered) {
@@ -122,7 +133,7 @@ export function updateNotificationsQueue(notification, intlMessages, intlLocale,
       dispatch(updateNotifications(notification, intlMessages, intlLocale));
     }
   };
-};
+}
 
 export function dequeueNotifications() {
   return (dispatch, getState) => {
@@ -144,12 +155,12 @@ export function dequeueNotifications() {
     });
     dispatch(markReadNotifications());
   };
-};
+}
 
 const excludeTypesFromSettings = getState => getSettings(getState()).getIn(['notifications', 'shows']).filter(enabled => !enabled).keySeq().toJS();
 
 const excludeTypesFromFilter = filter => {
-  const allTypes = ImmutableList(['follow', 'follow_request', 'favourite', 'reblog', 'mention', 'poll', 'pleroma:emoji_reaction']);
+  const allTypes = ImmutableList(['follow', 'follow_request', 'favourite', 'reblog', 'mention', 'poll', 'move', 'pleroma:emoji_reaction']);
   return allTypes.filterNot(item => item === filter).toJS();
 };
 
@@ -184,8 +195,25 @@ export function expandNotifications({ maxId } = {}, done = noOp) {
     api(getState).get('/api/v1/notifications', { params }).then(response => {
       const next = getLinks(response).refs.find(link => link.rel === 'next');
 
-      dispatch(importFetchedAccounts(response.data.map(item => item.account)));
-      dispatch(importFetchedStatuses(response.data.map(item => item.status).filter(status => !!status)));
+      const entries = response.data.reduce((acc, item) => {
+        if (item.account && item.account.id) {
+          acc.accounts[item.account.id] = item.account;
+        }
+
+        // Used by Move notification
+        if (item.target && item.target.id) {
+          acc.accounts[item.target.id] = item.target;
+        }
+
+        if (item.status && item.status.id) {
+          acc.statuses[item.status.id] = item.status;
+        }
+
+        return acc;
+      }, { accounts: {}, statuses: {} });
+
+      dispatch(importFetchedAccounts(Object.values(entries.accounts)));
+      dispatch(importFetchedStatuses(Object.values(entries.statuses)));
 
       dispatch(expandNotificationsSuccess(response.data, next ? next.uri : null, isLoadingMore));
       fetchRelatedRelationships(dispatch, response.data);
@@ -195,14 +223,14 @@ export function expandNotifications({ maxId } = {}, done = noOp) {
       done();
     });
   };
-};
+}
 
 export function expandNotificationsRequest(isLoadingMore) {
   return {
     type: NOTIFICATIONS_EXPAND_REQUEST,
     skipLoading: !isLoadingMore,
   };
-};
+}
 
 export function expandNotificationsSuccess(notifications, next, isLoadingMore) {
   return {
@@ -211,7 +239,7 @@ export function expandNotificationsSuccess(notifications, next, isLoadingMore) {
     next,
     skipLoading: !isLoadingMore,
   };
-};
+}
 
 export function expandNotificationsFail(error, isLoadingMore) {
   return {
@@ -219,7 +247,7 @@ export function expandNotificationsFail(error, isLoadingMore) {
     error,
     skipLoading: !isLoadingMore,
   };
-};
+}
 
 export function clearNotifications() {
   return (dispatch, getState) => {
@@ -231,7 +259,7 @@ export function clearNotifications() {
 
     api(getState).post('/api/v1/notifications/clear');
   };
-};
+}
 
 export function scrollTopNotifications(top) {
   return (dispatch, getState) => {

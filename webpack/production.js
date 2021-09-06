@@ -4,26 +4,29 @@ console.log('Running in production mode'); // eslint-disable-line no-console
 const { merge } = require('webpack-merge');
 const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 const OfflinePlugin = require('offline-plugin');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
-const { output } = require('./configuration');
+const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
 const sharedConfig = require('./shared');
 
-module.exports = merge(sharedConfig, {
+const smp = new SpeedMeasurePlugin();
+
+module.exports = smp.wrap(merge(sharedConfig, {
   mode: 'production',
   devtool: 'source-map',
-  stats: 'normal',
+  stats: 'errors-warnings',
   bail: true,
   optimization: {
     minimize: true,
     minimizer: [
-      new UglifyJsPlugin({
+      new TerserPlugin({
         cache: true,
         parallel: true,
         sourceMap: true,
 
-        uglifyOptions: {
+        terserOptions: {
           warnings: false,
+          mangle: false,
 
           output: {
             comments: false,
@@ -35,7 +38,10 @@ module.exports = merge(sharedConfig, {
 
   plugins: [
     new CompressionPlugin({
-      test: /\.(js|css|html|json|ico|svg|eot|otf|ttf|map)$/,
+      test: /\.(js|css|html|json|ico|svg|eot|otf|ttf|map|mp3|ogg|oga)$/,
+      exclude: [
+        'instance',
+      ],
     }),
     new BundleAnalyzerPlugin({ // generates report.html
       analyzerMode: 'static',
@@ -43,13 +49,13 @@ module.exports = merge(sharedConfig, {
       logLevel: 'silent', // do not bother Webpacker, who runs with --json and parses stdout
     }),
     new OfflinePlugin({
-      publicPath: output.publicPath, // sw.js must be served from the root to avoid scope issues
       caches: {
         main: [':rest:'],
         additional: [':externals:'],
         optional: [
           '**/locale_*.js', // don't fetch every locale; the user only needs one
           '**/*_polyfills-*.js', // the user may not need polyfills
+          '**/*.chunk.js', // only cache chunks when needed
           '**/*.woff2', // the user may have system-fonts enabled
           // images/audio can be cached on-demand
           '**/*.png',
@@ -62,7 +68,16 @@ module.exports = merge(sharedConfig, {
       },
       externals: [
         '/emoji/1f602.svg', // used for emoji picker dropdown
-        '/emoji/sheet_10.png', // used in emoji-mart
+        '/emoji/sheet_13.png', // used in emoji-mart
+
+        // Default emoji reacts
+        '/emoji/1f44d.svg', // Thumbs up
+        '/emoji/2764.svg',  // Heart
+        '/emoji/1f606.svg', // Laughing
+        '/emoji/1f62e.svg', // Surprised
+        '/emoji/1f622.svg', // Crying
+        '/emoji/1f629.svg', // Weary
+        '/emoji/1f621.svg', // Angry (Spinster)
       ],
       excludes: [
         '**/*.gz',
@@ -74,14 +89,14 @@ module.exports = merge(sharedConfig, {
         '**/*.ttf',
         '**/*-webfont-*.svg',
         '**/*.woff',
+        // Don't cache index.html
+        'index.html',
       ],
       // ServiceWorker: {
-      //   entry: `imports-loader?ATTACHMENT_HOST=>${encodeURIComponent(JSON.stringify(attachmentHost))}!${encodeURI(path.join(__dirname, '../app/soapbox/service_worker/entry.js'))}`,
+      //   entry: join(__dirname, '../app/soapbox/service_worker/entry.js'),
       //   cacheName: 'soapbox',
-      //   output: '../assets/sw.js',
-      //   publicPath: '/sw.js',
       //   minify: true,
       // },
     }),
   ],
-});
+}));

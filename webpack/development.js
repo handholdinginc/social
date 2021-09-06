@@ -1,10 +1,11 @@
 // Note: You must restart bin/webpack-dev-server for changes to take effect
 console.log('Running in development mode'); // eslint-disable-line no-console
 
-const { resolve } = require('path');
 const { merge } = require('webpack-merge');
+const SpeedMeasurePlugin = require('speed-measure-webpack-plugin');
 const sharedConfig = require('./shared');
-const { settings, output } = require('./configuration');
+
+const smp = new SpeedMeasurePlugin();
 
 const watchOptions = {};
 
@@ -21,13 +22,13 @@ const backendEndpoints = [
   '/auth/password',
   '/.well-known/webfinger',
   '/static',
-  '/emoji',
   '/main/ostatus',
   '/ostatus_subscribe',
+  '/favicon.png',
 ];
 
 const makeProxyConfig = () => {
-  let proxyConfig = {};
+  const proxyConfig = {};
   proxyConfig['/api/patron'] = {
     target: patronUrl,
     secure: secureProxy,
@@ -50,7 +51,7 @@ if (process.env.VAGRANT) {
   watchOptions.poll = 1000;
 }
 
-module.exports = merge(sharedConfig, {
+module.exports = smp.wrap(merge(sharedConfig, {
   mode: 'development',
   cache: true,
   devtool: 'source-map',
@@ -72,11 +73,9 @@ module.exports = merge(sharedConfig, {
     port: 3036,
     https: false,
     hot: false,
-    contentBase: resolve(__dirname, '..', settings.public_root_path),
     inline: true,
     useLocalIp: false,
     public: 'localhost:3036',
-    publicPath: output.publicPath,
     historyApiFallback: {
       disableDotRule: true,
     },
@@ -84,12 +83,7 @@ module.exports = merge(sharedConfig, {
       'Access-Control-Allow-Origin': '*',
     },
     overlay: true,
-    stats: {
-      entrypoints: false,
-      errorDetails: false,
-      modules: false,
-      moduleTrace: false,
-    },
+    stats: 'errors-warnings',
     watchOptions: Object.assign(
       {},
       { ignored: '**/node_modules/**' },
@@ -98,4 +92,4 @@ module.exports = merge(sharedConfig, {
     serveIndex: true,
     proxy: makeProxyConfig(),
   },
-});
+}));

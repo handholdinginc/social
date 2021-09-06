@@ -32,6 +32,9 @@ import {
   COMPOSE_RESET,
   COMPOSE_POLL_ADD,
   COMPOSE_POLL_REMOVE,
+  COMPOSE_SCHEDULE_ADD,
+  COMPOSE_SCHEDULE_SET,
+  COMPOSE_SCHEDULE_REMOVE,
   COMPOSE_POLL_OPTION_ADD,
   COMPOSE_POLL_OPTION_CHANGE,
   COMPOSE_POLL_OPTION_REMOVE,
@@ -90,7 +93,7 @@ function statusToTextMentions(state, status, account) {
     .delete(account.get('acct'))
     .map(m => `@${m} `)
     .join('');
-};
+}
 
 function clearAll(state) {
   return state.withMutations(map => {
@@ -107,8 +110,9 @@ function clearAll(state) {
     map.set('media_attachments', ImmutableList());
     map.set('poll', null);
     map.set('idempotencyKey', uuid());
+    map.set('schedule', null);
   });
-};
+}
 
 function appendMedia(state, media) {
   const prevSize = state.get('media_attachments').size;
@@ -123,7 +127,7 @@ function appendMedia(state, media) {
       map.set('sensitive', true);
     }
   });
-};
+}
 
 function removeMedia(state, mediaId) {
   const prevSize = state.get('media_attachments').size;
@@ -136,7 +140,7 @@ function removeMedia(state, mediaId) {
       map.set('sensitive', false);
     }
   });
-};
+}
 
 const insertSuggestion = (state, position, token, completion, path) => {
   return state.withMutations(map => {
@@ -398,6 +402,12 @@ export default function compose(state = initialState, action) {
     return state.set('poll', initialPoll);
   case COMPOSE_POLL_REMOVE:
     return state.set('poll', null);
+  case COMPOSE_SCHEDULE_ADD:
+    return state.set('schedule', new Date());
+  case COMPOSE_SCHEDULE_SET:
+    return state.set('schedule', action.date);
+  case COMPOSE_SCHEDULE_REMOVE:
+    return state.set('schedule', null);
   case COMPOSE_POLL_OPTION_ADD:
     return state.updateIn(['poll', 'options'], options => options.push(action.title));
   case COMPOSE_POLL_OPTION_CHANGE:
@@ -415,4 +425,4 @@ export default function compose(state = initialState, action) {
   default:
     return state;
   }
-};
+}

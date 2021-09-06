@@ -52,11 +52,15 @@ const messages = defineMessages({
 const makeMapStateToProps = () => {
   const getStatus = makeGetStatus();
 
-  const mapStateToProps = (state, props) => ({
-    status: getStatus(state, props),
-    displayMedia: getSettings(state).get('displayMedia'),
-    allowedEmoji: getSoapboxConfig(state).get('allowedEmoji'),
-  });
+  const mapStateToProps = (state, props) => {
+    const soapbox = getSoapboxConfig(state);
+
+    return {
+      status: getStatus(state, props),
+      displayMedia: getSettings(state).get('displayMedia'),
+      allowedEmoji: soapbox.get('allowedEmoji'),
+    };
+  };
 
   return mapStateToProps;
 };
@@ -65,7 +69,7 @@ const mapDispatchToProps = (dispatch, { intl }) => ({
 
   onReply(status, router) {
     dispatch((_, getState) => {
-      let state = getState();
+      const state = getState();
       if (state.getIn(['compose', 'text']).trim().length !== 0) {
         dispatch(openModal('CONFIRM', {
           message: intl.formatMessage(messages.replyMessage),
@@ -107,9 +111,9 @@ const mapDispatchToProps = (dispatch, { intl }) => ({
 
   onBookmark(status) {
     if (status.get('bookmarked')) {
-      dispatch(unbookmark(status));
+      dispatch(unbookmark(intl, status));
     } else {
-      dispatch(bookmark(status));
+      dispatch(bookmark(intl, status));
     }
   },
 

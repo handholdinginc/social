@@ -2,6 +2,7 @@ import React from 'react';
 import { defineMessages } from 'react-intl';
 import { openModal } from 'soapbox/actions/modal';
 import { deactivateUsers, deleteUsers, deleteStatus, toggleStatusSensitivity } from 'soapbox/actions/admin';
+import { fetchAccountByUsername } from 'soapbox/actions/accounts';
 import snackbar from 'soapbox/actions/snackbar';
 import AccountContainer from 'soapbox/containers/account_container';
 import { isLocal } from 'soapbox/utils/accounts';
@@ -35,7 +36,7 @@ export function deactivateUserModal(intl, accountId, afterConfirm = () => {}) {
       message: intl.formatMessage(messages.deactivateUserPrompt, { acct }),
       confirm: intl.formatMessage(messages.deactivateUserConfirm, { name }),
       onConfirm: () => {
-        dispatch(deactivateUsers([acct])).then(() => {
+        dispatch(deactivateUsers([accountId])).then(() => {
           const message = intl.formatMessage(messages.userDeactivated, { acct });
           dispatch(snackbar.success(message));
           afterConfirm();
@@ -73,8 +74,9 @@ export function deleteUserModal(intl, accountId, afterConfirm = () => {}) {
       confirm,
       checkbox,
       onConfirm: () => {
-        dispatch(deleteUsers([acct])).then(() => {
+        dispatch(deleteUsers([accountId])).then(() => {
           const message = intl.formatMessage(messages.userDeleted, { acct });
+          dispatch(fetchAccountByUsername(acct));
           dispatch(snackbar.success(message));
           afterConfirm();
         }).catch(() => {});

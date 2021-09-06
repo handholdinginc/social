@@ -170,6 +170,10 @@ export function LoginPage() {
   return import(/* webpackChunkName: "features/auth_login" */'../../auth_login/components/login_page');
 }
 
+export function ExternalLogin() {
+  return import(/* webpackChunkName: "features/external_login" */'../../external_login');
+}
+
 export function Preferences() {
   return import(/* webpackChunkName: "features/preferences" */'../../preferences');
 }
@@ -180,6 +184,10 @@ export function EditProfile() {
 
 export function SoapboxConfig() {
   return import(/* webpackChunkName: "features/soapbox_config" */'../../soapbox_config');
+}
+
+export function ExportData() {
+  return import(/* webpackChunkName: "features/export_data" */ '../../export_data');
 }
 
 export function ImportData() {
@@ -210,6 +218,10 @@ export function ChatRoom() {
   return import(/* webpackChunkName: "features/chats/chat_room" */'../../chats/chat_room');
 }
 
+export function ChatPanes() {
+  return import(/* webpackChunkName: "features/chats/components/chat_panes" */'../../chats/components/chat_panes');
+}
+
 export function ServerInfo() {
   return import(/* webpackChunkName: "features/server_info" */'../../server_info');
 }
@@ -232,4 +244,25 @@ export function ModerationLog() {
 
 export function SignupPage() {
   return import('../../landing_page');
+}
+
+export function CryptoDonate() {
+  return import(/* webpackChunkName: "features/crypto_donate" */'../../crypto_donate');
+}
+
+export function ScheduledStatuses() {
+  return import(/* webpackChunkName: "features/scheduled_statuses" */'../../scheduled_statuses');
+}
+
+export function UserIndex() {
+  return import(/* webpackChunkName: "features/admin/user_index" */'../../admin/user_index');
+}
+
+export function FederationRestrictions() {
+  return import(/* webpackChunkName: "features/federation_restrictions" */'../../federation_restrictions');
+}
+
+export function Aliases() {
+  return import(/* webpackChunkName: "features/aliases" */'../../aliases');
+
 }
