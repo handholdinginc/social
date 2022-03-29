@@ -1,13 +1,17 @@
+import classNames from 'classnames';
+import PropTypes from 'prop-types';
 import React from 'react';
 import ImmutablePropTypes from 'react-immutable-proptypes';
-import PropTypes from 'prop-types';
-import Motion from '../../ui/util/optional_motion';
-import spring from 'react-motion/lib/spring';
 import ImmutablePureComponent from 'react-immutable-pure-component';
 import { defineMessages, injectIntl, FormattedMessage } from 'react-intl';
-import classNames from 'classnames';
-import Icon from 'soapbox/components/icon';
+import spring from 'react-motion/lib/spring';
+import { withRouter } from 'react-router-dom';
+
 import Blurhash from 'soapbox/components/blurhash';
+import Icon from 'soapbox/components/icon';
+import IconButton from 'soapbox/components/icon_button';
+
+import Motion from '../../ui/util/optional_motion';
 
 const MIMETYPE_ICONS = {
   'application/x-freearc': 'file-archive-o',
@@ -48,12 +52,8 @@ const messages = defineMessages({
   delete: { id: 'upload_form.undo', defaultMessage: 'Delete' },
 });
 
-export default @injectIntl
+export default @injectIntl @withRouter
 class Upload extends ImmutablePureComponent {
-
-  static contextTypes = {
-    router: PropTypes.object,
-  };
 
   static propTypes = {
     media: ImmutablePropTypes.map.isRequired,
@@ -62,6 +62,7 @@ class Upload extends ImmutablePureComponent {
     onDescriptionChange: PropTypes.func.isRequired,
     onOpenFocalPoint: PropTypes.func.isRequired,
     onSubmit: PropTypes.func.isRequired,
+    history: PropTypes.object.isRequired,
   };
 
   state = {
@@ -78,7 +79,7 @@ class Upload extends ImmutablePureComponent {
 
   handleSubmit = () => {
     this.handleInputBlur();
-    this.props.onSubmit(this.context.router.history);
+    this.props.onSubmit(this.props.history);
   }
 
   handleUndoClick = e => {
@@ -153,8 +154,20 @@ class Upload extends ImmutablePureComponent {
                 backgroundPosition: `${x}% ${y}%` }}
             >
               <div className={classNames('compose-form__upload__actions', { active })}>
-                <button className='icon-button' onClick={this.handleUndoClick}><Icon id='times' /> <FormattedMessage id='upload_form.undo' defaultMessage='Delete' /></button>
-                {mediaType !== 'unknown' && <button className='icon-button' onClick={this.handleOpenModal}><Icon id='search-plus' /> <FormattedMessage id='upload_form.preview' defaultMessage='Preview' /></button>}
+                <IconButton
+                  onClick={this.handleUndoClick}
+                  src={require('@tabler/icons/icons/x.svg')}
+                  text={<FormattedMessage id='upload_form.undo' defaultMessage='Delete' />}
+                />
+
+                {/* Only display the "Preview" button for a valid attachment with a URL */}
+                {(mediaType !== 'unknown' && Boolean(media.get('url'))) && (
+                  <IconButton
+                    onClick={this.handleOpenModal}
+                    src={require('@tabler/icons/icons/zoom-in.svg')}
+                    text={<FormattedMessage id='upload_form.preview' defaultMessage='Preview' />}
+                  />
+                )}
               </div>
 
               <div className={classNames('compose-form__upload-description', { active })}>

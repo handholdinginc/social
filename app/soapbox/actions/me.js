@@ -1,7 +1,9 @@
-import api from '../api';
-import { importFetchedAccount } from './importer';
-import { verifyCredentials } from './auth';
 import { getAuthUserId, getAuthUserUrl } from 'soapbox/utils/auth';
+
+import api from '../api';
+
+import { loadCredentials } from './auth';
+import { importFetchedAccount } from './importer';
 
 export const ME_FETCH_REQUEST = 'ME_FETCH_REQUEST';
 export const ME_FETCH_SUCCESS = 'ME_FETCH_SUCCESS';
@@ -38,7 +40,7 @@ export function fetchMe() {
     }
 
     dispatch(fetchMeRequest());
-    return dispatch(verifyCredentials(token, accountUrl)).catch(error => {
+    return dispatch(loadCredentials(token, accountUrl)).catch(error => {
       dispatch(fetchMeFail(error));
     });
   };
@@ -53,6 +55,7 @@ export function patchMe(params) {
         dispatch(patchMeSuccess(response.data));
       }).catch(error => {
         dispatch(patchMeFail(error));
+        throw error;
       });
   };
 }
@@ -65,7 +68,6 @@ export function fetchMeRequest() {
 
 export function fetchMeSuccess(me) {
   return (dispatch, getState) => {
-    dispatch(importFetchedAccount(me));
     dispatch({
       type: ME_FETCH_SUCCESS,
       me,
@@ -101,5 +103,6 @@ export function patchMeFail(error) {
   return {
     type: ME_PATCH_FAIL,
     error,
+    skipAlert: true,
   };
 }

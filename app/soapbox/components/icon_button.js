@@ -1,17 +1,20 @@
-import React from 'react';
-import Motion from '../features/ui/util/optional_motion';
-import spring from 'react-motion/lib/spring';
-import PropTypes from 'prop-types';
 import classNames from 'classnames';
+import PropTypes from 'prop-types';
+import React from 'react';
+import spring from 'react-motion/lib/spring';
+
 import Icon from 'soapbox/components/icon';
 import emojify from 'soapbox/features/emoji/emoji';
+
+import Motion from '../features/ui/util/optional_motion';
 
 export default class IconButton extends React.PureComponent {
 
   static propTypes = {
     className: PropTypes.string,
     title: PropTypes.string.isRequired,
-    icon: PropTypes.string.isRequired,
+    icon: PropTypes.string,
+    src: PropTypes.string,
     onClick: PropTypes.func,
     onMouseDown: PropTypes.func,
     onKeyUp: PropTypes.func,
@@ -32,6 +35,7 @@ export default class IconButton extends React.PureComponent {
     tabIndex: PropTypes.string,
     text: PropTypes.string,
     emoji: PropTypes.string,
+    type: PropTypes.string,
   };
 
   static defaultProps = {
@@ -46,6 +50,7 @@ export default class IconButton extends React.PureComponent {
     onClick: () => {},
     onMouseEnter: () => {},
     onMouseLeave: () => {},
+    type: 'button',
   };
 
   handleClick = (e) =>  {
@@ -97,6 +102,7 @@ export default class IconButton extends React.PureComponent {
       disabled,
       expanded,
       icon,
+      src,
       inverted,
       overlay,
       pressed,
@@ -104,6 +110,7 @@ export default class IconButton extends React.PureComponent {
       title,
       text,
       emoji,
+      type,
     } = this.props;
 
     const classes = classNames(className, 'icon-button', {
@@ -132,13 +139,14 @@ export default class IconButton extends React.PureComponent {
           onMouseLeave={this.props.onMouseLeave}
           tabIndex={tabIndex}
           disabled={disabled}
+          type={type}
         >
-          <div style={style}>
+          <div style={src ? {} : style}>
             {emoji
               ? <div className='icon-button__emoji' dangerouslySetInnerHTML={{ __html: emojify(emoji) }} aria-hidden='true' />
-              : <Icon id={icon} fixedWidth aria-hidden='true' />}
+              : <Icon id={icon} src={src} fixedWidth aria-hidden='true' />}
           </div>
-          {text && <span className='icon_button__text'>{text}</span>}
+          {text && <span className='icon-button__text'>{text}</span>}
         </button>
       );
     }
@@ -161,13 +169,14 @@ export default class IconButton extends React.PureComponent {
             onMouseLeave={this.props.onMouseLeave}
             tabIndex={tabIndex}
             disabled={disabled}
+            type={type}
           >
-            <div style={style}>
+            <div style={src ? {} : style}>
               {emoji
                 ? <div className='icon-button__emoji' style={{ transform: `rotate(${rotate}deg)` }} dangerouslySetInnerHTML={{ __html: emojify(emoji) }} aria-hidden='true' />
-                : <Icon id={icon} style={{ transform: `rotate(${rotate}deg)` }} fixedWidth aria-hidden='true' />}
+                : <Icon id={icon} src={src} style={{ transform: `rotate(${rotate}deg)` }} fixedWidth aria-hidden='true' />}
             </div>
-            {text && <span className='icon_button__text'>{text}</span>}
+            {text && <span className='icon-button__text'>{text}</span>}
           </button>
         )}
       </Motion>

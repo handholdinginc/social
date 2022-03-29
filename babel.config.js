@@ -11,6 +11,7 @@ module.exports = (api) => {
   const config = {
     presets: [
       '@babel/react',
+      '@babel/typescript',
       ['@babel/env', envOptions],
     ],
     plugins: [
@@ -56,6 +57,9 @@ module.exports = (api) => {
     ]);
     break;
   case 'test':
+    config.plugins.push(...[
+      'transform-require-context',
+    ]);
     envOptions.modules = 'commonjs';
     break;
   }

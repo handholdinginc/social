@@ -1,10 +1,13 @@
-import React from 'react';
+import { createBrowserHistory } from 'history';
 import PropTypes from 'prop-types';
+import React from 'react';
 import 'wicg-inert';
 import { injectIntl, FormattedMessage, defineMessages } from 'react-intl';
 import { connect } from 'react-redux';
-import { openModal } from '../actions/modal';
+import { withRouter } from 'react-router-dom';
+
 import { cancelReplyCompose } from '../actions/compose';
+import { openModal, closeModal } from '../actions/modals';
 
 const messages = defineMessages({
   confirm: { id: 'confirmations.delete.confirm', defaultMessage: 'Delete' },
@@ -16,6 +19,7 @@ const checkComposeContent = compose => {
     compose.get('spoiler_text').length > 0,
     compose.get('media_attachments').size > 0,
     compose.get('in_reply_to') !== null,
+    compose.get('quote') !== null,
     compose.get('poll') !== null,
   ].some(check => check === true);
 };
@@ -28,21 +32,29 @@ const mapDispatchToProps = (dispatch) => ({
   onOpenModal(type, opts) {
     dispatch(openModal(type, opts));
   },
+  onCloseModal(type) {
+    dispatch(closeModal(type));
+  },
   onCancelReplyCompose() {
+    dispatch(closeModal('COMPOSE'));
     dispatch(cancelReplyCompose());
   },
 });
 
+@withRouter
 class ModalRoot extends React.PureComponent {
 
   static propTypes = {
     children: PropTypes.node,
     onClose: PropTypes.func.isRequired,
     onOpenModal: PropTypes.func.isRequired,
+    onCloseModal: PropTypes.func.isRequired,
     onCancelReplyCompose: PropTypes.func.isRequired,
     intl: PropTypes.object.isRequired,
     hasComposeContent: PropTypes.bool,
     type: PropTypes.string,
+    onCancel: PropTypes.func,
+    history: PropTypes.object,
   };
 
   state = {
@@ -59,17 +71,19 @@ class ModalRoot extends React.PureComponent {
   }
 
   handleOnClose = () => {
-    const { onOpenModal, hasComposeContent, intl, type, onCancelReplyCompose } = this.props;
+    const { onOpenModal, onCloseModal, hasComposeContent, intl, type, onCancelReplyCompose } = this.props;
 
     if (hasComposeContent && type === 'COMPOSE') {
       onOpenModal('CONFIRM', {
+        icon: require('@tabler/icons/icons/trash.svg'),
+        heading: <FormattedMessage id='confirmations.delete.heading' defaultMessage='Delete post' />,
         message: <FormattedMessage id='confirmations.delete.message' defaultMessage='Are you sure you want to delete this post?' />,
         confirm: intl.formatMessage(messages.confirm),
         onConfirm: () => onCancelReplyCompose(),
-        onCancel: () => onOpenModal('COMPOSE'),
+        onCancel: () => onCloseModal('CONFIRM'),
       });
     } else if (hasComposeContent && type === 'CONFIRM') {
-      onOpenModal('COMPOSE');
+      onCloseModal('CONFIRM');
     } else {
       this.props.onClose();
     }
@@ -100,12 +114,15 @@ class ModalRoot extends React.PureComponent {
   componentDidMount() {
     window.addEventListener('keyup', this.handleKeyUp, false);
     window.addEventListener('keydown', this.handleKeyDown, false);
+    this.history = this.props.history || createBrowserHistory();
   }
 
   componentDidUpdate(prevProps) {
     if (!!this.props.children && !prevProps.children) {
       this.activeElement = document.activeElement;
       this.getSiblings().forEach(sibling => sibling.setAttribute('inert', true));
+
+      this._handleModalOpen();
     } else if (!prevProps.children) {
       this.setState({ revealed: false });
     }
@@ -114,18 +131,52 @@ class ModalRoot extends React.PureComponent {
       this.activeElement.focus();
       this.activeElement = null;
       this.getSiblings().forEach(sibling => sibling.removeAttribute('inert'));
+
+      this._handleModalClose(prevProps.type);
     }
 
     if (this.props.children) {
       requestAnimationFrame(() => {
         this.setState({ revealed: true });
       });
+
+      this._ensureHistoryBuffer();
     }
   }
 
   componentWillUnmount() {
     window.removeEventListener('keyup', this.handleKeyUp);
     window.removeEventListener('keydown', this.handleKeyDown);
+  }
+
+  _handleModalOpen() {
+    this._modalHistoryKey = Date.now();
+    this.unlistenHistory = this.history.listen((_, action) => {
+      if (action === 'POP') {
+        this.handleOnClose();
+
+        if (this.props.onCancel) this.props.onCancel();
+      }
+    });
+  }
+
+  _handleModalClose(type) {
+    if (this.unlistenHistory) {
+      this.unlistenHistory();
+    }
+    if (!['FAVOURITES', 'MENTIONS', 'REACTIONS', 'REBLOGS', 'MEDIA'].includes(type)) {
+      const { state } = this.history.location;
+      if (state && state.soapboxModalKey === this._modalHistoryKey) {
+        this.history.goBack();
+      }
+    }
+  }
+
+  _ensureHistoryBuffer() {
+    const { pathname, state } = this.history.location;
+    if (!state || state.soapboxModalKey !== this._modalHistoryKey) {
+      this.history.push(pathname, { ...state, soapboxModalKey: this._modalHistoryKey });
+    }
   }
 
   getSiblings = () => {

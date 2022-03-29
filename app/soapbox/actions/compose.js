@@ -1,21 +1,23 @@
-import api from '../api';
 import { CancelToken, isCancel } from 'axios';
 import { throttle } from 'lodash';
+import { defineMessages } from 'react-intl';
+
+import snackbar from 'soapbox/actions/snackbar';
+import { isLoggedIn } from 'soapbox/utils/auth';
+import { getFeatures } from 'soapbox/utils/features';
+
+import api from '../api';
 import { search as emojiSearch } from '../features/emoji/emoji_mart_search_light';
 import { tagHistory } from '../settings';
-import { useEmoji } from './emojis';
 import resizeImage from '../utils/resize_image';
-import { importFetchedAccounts } from './importer';
-import { updateTimeline, dequeueTimeline } from './timelines';
+
 import { showAlert, showAlertForError } from './alerts';
-import { defineMessages } from 'react-intl';
-import { openModal, closeModal } from './modal';
+import { useEmoji } from './emojis';
+import { importFetchedAccounts } from './importer';
+import { uploadMedia, fetchMedia, updateMedia } from './media';
+import { openModal, closeModal } from './modals';
 import { getSettings } from './settings';
-import { getFeatures } from 'soapbox/utils/features';
-import { uploadMedia } from './media';
-import { isLoggedIn } from 'soapbox/utils/auth';
 import { createStatus } from './statuses';
-import snackbar from 'soapbox/actions/snackbar';
 
 let cancelFetchComposeSuggestionsAccounts;
 
@@ -25,6 +27,8 @@ export const COMPOSE_SUBMIT_SUCCESS  = 'COMPOSE_SUBMIT_SUCCESS';
 export const COMPOSE_SUBMIT_FAIL     = 'COMPOSE_SUBMIT_FAIL';
 export const COMPOSE_REPLY           = 'COMPOSE_REPLY';
 export const COMPOSE_REPLY_CANCEL    = 'COMPOSE_REPLY_CANCEL';
+export const COMPOSE_QUOTE           = 'COMPOSE_QUOTE';
+export const COMPOSE_QUOTE_CANCEL    = 'COMPOSE_QUOTE_CANCEL';
 export const COMPOSE_DIRECT          = 'COMPOSE_DIRECT';
 export const COMPOSE_MENTION         = 'COMPOSE_MENTION';
 export const COMPOSE_RESET           = 'COMPOSE_RESET';
@@ -69,10 +73,15 @@ export const COMPOSE_SCHEDULE_ADD    = 'COMPOSE_SCHEDULE_ADD';
 export const COMPOSE_SCHEDULE_SET    = 'COMPOSE_SCHEDULE_SET';
 export const COMPOSE_SCHEDULE_REMOVE = 'COMPOSE_SCHEDULE_REMOVE';
 
+export const COMPOSE_ADD_TO_MENTIONS = 'COMPOSE_ADD_TO_MENTIONS';
+export const COMPOSE_REMOVE_FROM_MENTIONS = 'COMPOSE_REMOVE_FROM_MENTIONS';
+
 const messages = defineMessages({
   uploadErrorLimit: { id: 'upload_error.limit', defaultMessage: 'File upload limit exceeded.' },
   uploadErrorPoll:  { id: 'upload_error.poll', defaultMessage: 'File upload not allowed with polls.' },
   scheduleError: { id: 'compose.invalid_schedule', defaultMessage: 'You must schedule a post at least 5 minutes out.'  },
+  success: { id: 'compose.submit_success', defaultMessage: 'Your post was sent' },
+  view: { id: 'snackbar.view', defaultMessage: 'View' },
 });
 
 const COMPOSE_PANEL_BREAKPOINT = 600 + (285 * 1) + (10 * 1);
@@ -93,10 +102,14 @@ export function changeCompose(text) {
 export function replyCompose(status, routerHistory) {
   return (dispatch, getState) => {
     const state = getState();
+    const instance = state.get('instance');
+    const { explicitAddressing } = getFeatures(instance);
+
     dispatch({
       type: COMPOSE_REPLY,
       status: status,
       account: state.getIn(['accounts', state.get('me')]),
+      explicitAddressing,
     });
 
     dispatch(openModal('COMPOSE'));
@@ -106,6 +119,29 @@ export function replyCompose(status, routerHistory) {
 export function cancelReplyCompose() {
   return {
     type: COMPOSE_REPLY_CANCEL,
+  };
+}
+
+export function quoteCompose(status, routerHistory) {
+  return (dispatch, getState) => {
+    const state = getState();
+    const instance = state.get('instance');
+    const { explicitAddressing } = getFeatures(instance);
+
+    dispatch({
+      type: COMPOSE_QUOTE,
+      status: status,
+      account: state.getIn(['accounts', state.get('me')]),
+      explicitAddressing,
+    });
+
+    dispatch(openModal('COMPOSE'));
+  };
+}
+
+export function cancelQuoteCompose() {
+  return {
+    type: COMPOSE_QUOTE_CANCEL,
   };
 }
 
@@ -137,30 +173,25 @@ export function directCompose(account, routerHistory) {
   };
 }
 
+export function directComposeById(accountId) {
+  return (dispatch, getState) => {
+    const account = getState().getIn(['accounts', accountId]);
+
+    dispatch({
+      type: COMPOSE_DIRECT,
+      account: account,
+    });
+
+    dispatch(openModal('COMPOSE'));
+  };
+}
+
 export function handleComposeSubmit(dispatch, getState, data, status) {
   if (!dispatch || !getState) return;
 
   dispatch(insertIntoTagHistory(data.tags || [], status));
   dispatch(submitComposeSuccess({ ...data }));
-
-  // To make the app more responsive, immediately push the status into the columns
-  const insertIfOnline = timelineId => {
-    const timeline = getState().getIn(['timelines', timelineId]);
-
-    if (timeline && timeline.get('items').size > 0 && timeline.getIn(['items', 0]) !== null && timeline.get('online')) {
-      const dequeueArgs = {};
-      if (timelineId === 'community') dequeueArgs.onlyMedia = getSettings(getState()).getIn(['community', 'other', 'onlyMedia']);
-      dispatch(dequeueTimeline(timelineId, null, dequeueArgs));
-      dispatch(updateTimeline(timelineId, data.id));
-    }
-  };
-
-  if (data.visibility !== 'direct') {
-    insertIfOnline('home');
-  } else if (data.visibility === 'public') {
-    insertIfOnline('community');
-    insertIfOnline('public');
-  }
+  dispatch(snackbar.success(messages.success, messages.view, `/@${data.account.acct}/posts/${data.id}`));
 }
 
 const needsDescriptions = state => {
@@ -188,6 +219,7 @@ export function submitCompose(routerHistory, force = false) {
 
     const status = state.getIn(['compose', 'text'], '');
     const media  = state.getIn(['compose', 'media_attachments']);
+    let to       = state.getIn(['compose', 'to']);
 
     if (!validateSchedule(state)) {
       dispatch(snackbar.error(messages.scheduleError));
@@ -205,6 +237,13 @@ export function submitCompose(routerHistory, force = false) {
       return;
     }
 
+    if (to && status) {
+      const mentions = status.match(/(?:^|\s|\.)@([a-z0-9_]+(?:@[a-z0-9\.\-]+)?)/gi); // not a perfect regex
+
+      if (mentions)
+        to = to.union(mentions.map(mention => mention.trim().slice(1)));
+    }
+
     dispatch(submitComposeRequest());
     dispatch(closeModal());
 
@@ -213,6 +252,7 @@ export function submitCompose(routerHistory, force = false) {
     const params = {
       status,
       in_reply_to_id: state.getIn(['compose', 'in_reply_to'], null),
+      quote_id: state.getIn(['compose', 'quote'], null),
       media_ids: media.map(item => item.get('id')),
       sensitive: state.getIn(['compose', 'sensitive']),
       spoiler_text: state.getIn(['compose', 'spoiler_text'], ''),
@@ -220,6 +260,7 @@ export function submitCompose(routerHistory, force = false) {
       content_type: state.getIn(['compose', 'content_type']),
       poll: state.getIn(['compose', 'poll'], null),
       scheduled_at: state.getIn(['compose', 'schedule'], null),
+      to,
     };
 
     dispatch(createStatus(params, idempotencyKey)).then(function(data) {
@@ -256,21 +297,21 @@ export function submitComposeFail(error) {
 export function uploadCompose(files) {
   return function(dispatch, getState) {
     if (!isLoggedIn(getState)) return;
-    const uploadLimit = getFeatures(getState().get('instance')).attachmentLimit;
+    const attachmentLimit = getState().getIn(['instance', 'configuration', 'statuses', 'max_media_attachments']);
 
     const media  = getState().getIn(['compose', 'media_attachments']);
     const progress = new Array(files.length).fill(0);
     let total = Array.from(files).reduce((a, v) => a + v.size, 0);
 
-    if (files.length + media.size > uploadLimit) {
+    if (files.length + media.size > attachmentLimit) {
       dispatch(showAlert(undefined, messages.uploadErrorLimit, 'error'));
       return;
     }
 
     dispatch(uploadComposeRequest());
 
-    for (const [i, f] of Array.from(files).entries()) {
-      if (media.size + i > uploadLimit - 1) break;
+    Array.from(files).forEach((f, i) => {
+      if (media.size + i > attachmentLimit - 1) return;
 
       // FIXME: Don't define function in loop
       /* eslint-disable no-loop-func */
@@ -286,11 +327,28 @@ export function uploadCompose(files) {
         };
 
         return dispatch(uploadMedia(data, onUploadProgress))
-          .then(({ data }) => dispatch(uploadComposeSuccess(data)));
+          .then(({ status, data }) => {
+            // If server-side processing of the media attachment has not completed yet,
+            // poll the server until it is, before showing the media attachment as uploaded
+            if (status === 200) {
+              dispatch(uploadComposeSuccess(data, f));
+            } else if (status === 202) {
+              const poll = () => {
+                dispatch(fetchMedia(data.id)).then(({ status, data }) => {
+                  if (status === 200) {
+                    dispatch(uploadComposeSuccess(data, f));
+                  } else if (status === 206) {
+                    setTimeout(() => poll(), 1000);
+                  }
+                }).catch(error => dispatch(uploadComposeFail(error)));
+              };
 
+              poll();
+            }
+          });
       }).catch(error => dispatch(uploadComposeFail(error)));
       /* eslint-enable no-loop-func */
-    }
+    });
   };
 }
 
@@ -300,7 +358,7 @@ export function changeUploadCompose(id, params) {
 
     dispatch(changeUploadComposeRequest());
 
-    api(getState).put(`/api/v1/media/${id}`, params).then(response => {
+    dispatch(updateMedia(id, params)).then(response => {
       dispatch(changeUploadComposeSuccess(response.data));
     }).catch(error => {
       dispatch(changeUploadComposeFail(id, error));
@@ -620,5 +678,37 @@ export function changePollSettings(expiresIn, isMultiple) {
     type: COMPOSE_POLL_SETTINGS_CHANGE,
     expiresIn,
     isMultiple,
+  };
+}
+
+export function openComposeWithText(text = '') {
+  return (dispatch, getState) => {
+    dispatch(resetCompose());
+    dispatch(openModal('COMPOSE'));
+    dispatch(changeCompose(text));
+  };
+}
+
+export function addToMentions(accountId) {
+  return (dispatch, getState) => {
+    const state = getState();
+    const acct = state.getIn(['accounts', accountId, 'acct']);
+
+    return dispatch({
+      type: COMPOSE_ADD_TO_MENTIONS,
+      account: acct,
+    });
+  };
+}
+
+export function removeFromMentions(accountId) {
+  return (dispatch, getState) => {
+    const state = getState();
+    const acct = state.getIn(['accounts', accountId, 'acct']);
+
+    return dispatch({
+      type: COMPOSE_REMOVE_FROM_MENTIONS,
+      account: acct,
+    });
   };
 }

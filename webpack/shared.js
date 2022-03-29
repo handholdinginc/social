@@ -1,55 +1,60 @@
 // Note: You must restart bin/webpack-dev-server for changes to take effect
 
-const webpack = require('webpack');
 const { join, resolve } = require('path');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const AssetsManifestPlugin = require('webpack-assets-manifest');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const HtmlWebpackHarddiskPlugin = require('html-webpack-harddisk-plugin');
+
 const CopyPlugin = require('copy-webpack-plugin');
-const { UnusedFilesWebpackPlugin } = require('unused-files-webpack-plugin');
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const HtmlWebpackHarddiskPlugin = require('html-webpack-harddisk-plugin');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const webpack = require('webpack');
+const AssetsManifestPlugin = require('webpack-assets-manifest');
+
 const { env, settings, output } = require('./configuration');
 const rules = require('./rules');
 
 const { FE_SUBDIRECTORY } = require(join(__dirname, '..', 'app', 'soapbox', 'build_config'));
 
-const htmlWebpackPluginConfig = {
-  template: 'app/index.ejs',
-  chunksSortMode: 'manual',
-  chunks: ['common', 'locale_en', 'application', 'styles'],
-  alwaysWriteToDisk: true,
-  minify: {
-    collapseWhitespace: true,
-    removeComments: false,
-    removeRedundantAttributes: true,
-    removeScriptTypeAttributes: true,
-    removeStyleLinkTypeAttributes: true,
-    useShortDoctype: true,
-  },
+const makeHtmlConfig = (params = {}) => {
+  return Object.assign({
+    template: 'app/index.ejs',
+    chunksSortMode: 'manual',
+    chunks: ['common', 'locale_en', 'application', 'styles'],
+    alwaysWriteToDisk: true,
+    minify: {
+      collapseWhitespace: true,
+      removeComments: false,
+      removeRedundantAttributes: true,
+      removeScriptTypeAttributes: true,
+      removeStyleLinkTypeAttributes: true,
+      useShortDoctype: true,
+    },
+  }, params);
 };
 
 module.exports = {
-  entry: Object.assign(
-    { application: resolve('app/application.js') },
-    { styles: resolve(join(settings.source_path, 'styles/application.scss')) },
-  ),
+  entry: {
+    application: resolve('app/application.js'),
+  },
 
   output: {
     filename: 'packs/js/[name]-[chunkhash].js',
     chunkFilename: 'packs/js/[name]-[chunkhash].chunk.js',
-    hotUpdateChunkFilename: 'packs/js/[id]-[hash].hot-update.js',
+    hotUpdateChunkFilename: 'packs/js/[id]-[contenthash].hot-update.js',
     path: output.path,
     publicPath: join(FE_SUBDIRECTORY, '/'),
   },
 
   optimization: {
+    chunkIds: 'total-size',
+    moduleIds: 'size',
     runtimeChunk: {
       name: 'common',
     },
     splitChunks: {
       cacheGroups: {
         default: false,
-        vendors: false,
+        defaultVendors: false,
         common: {
           name: 'common',
           chunks: 'all',
@@ -59,15 +64,18 @@ module.exports = {
         },
       },
     },
-    occurrenceOrder: true,
   },
 
   module: {
-    rules: Object.keys(rules).map(key => rules[key]),
+    rules,
   },
 
   plugins: [
     new webpack.EnvironmentPlugin(JSON.parse(JSON.stringify(env))),
+    new webpack.ProvidePlugin({
+      process: 'process/browser',
+    }),
+    new ForkTsCheckerWebpackPlugin(),
     new MiniCssExtractPlugin({
       filename: 'packs/css/[name]-[contenthash:8].css',
       chunkFilename: 'packs/css/[name]-[contenthash:8].chunk.css',
@@ -78,35 +86,24 @@ module.exports = {
       writeToDisk: true,
       publicPath: true,
     }),
-    // https://www.npmjs.com/package/unused-files-webpack-plugin#options
-    new UnusedFilesWebpackPlugin({
-      patterns: ['app/**/*.*'],
-      globOptions: {
-        ignore: [
-          'node_modules/**/*',
-          '**/__*__/**/*',
-          'app/instance/about.example',
-          'app/soapbox/locales/whitelist_*.json',
-        ],
-      },
-    }),
     // https://github.com/jantimon/html-webpack-plugin#options
-    new HtmlWebpackPlugin(htmlWebpackPluginConfig),
-    new HtmlWebpackPlugin(Object.assign(htmlWebpackPluginConfig, { filename: '404.html' })),
+    new HtmlWebpackPlugin(makeHtmlConfig()),
+    new HtmlWebpackPlugin(makeHtmlConfig({ filename: '404.html' })),
     new HtmlWebpackHarddiskPlugin(),
     new CopyPlugin({
       patterns: [{
         from: join(__dirname, '../node_modules/twemoji/assets/svg'),
-        to: join(output.path, 'emoji'),
-      }, {
-        from: join(__dirname, '../node_modules/emoji-datasource/img/twitter/sheets/32.png'),
-        to: join(output.path, 'emoji/sheet_13.png'),
-      }, {
-        from: join(__dirname, '../app/sounds'),
-        to: join(output.path, 'sounds'),
+        to: join(output.path, 'packs/emoji'),
       }, {
         from: join(__dirname, '../app/instance'),
         to: join(output.path, 'instance'),
+      }, {
+        from: join(__dirname, '../custom/instance'),
+        to: join(output.path, 'instance'),
+        noErrorOnMissing: true,
+        globOptions: {
+          ignore: ['**/.gitkeep'],
+        },
       }],
       options: {
         concurrency: 100,
@@ -120,15 +117,20 @@ module.exports = {
       resolve(settings.source_path),
       'node_modules',
     ],
+    alias: {
+      // Override tabler's package.json to allow importing .svg files directly
+      // https://stackoverflow.com/a/35990101/8811886
+      '@tabler': resolve('node_modules', '@tabler'),
+      'icons': resolve('app', 'icons'),
+      'custom': resolve('custom'),
+    },
+    fallback: {
+      path: require.resolve('path-browserify'),
+      util: require.resolve('util'),
+    },
   },
 
   resolveLoader: {
     modules: ['node_modules'],
-  },
-
-  node: {
-    // Called by http-link-header in an API we never use, increases
-    // bundle size unnecessarily
-    Buffer: false,
   },
 };

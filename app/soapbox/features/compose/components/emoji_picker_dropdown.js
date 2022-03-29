@@ -1,14 +1,15 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { defineMessages, injectIntl } from 'react-intl';
-import { EmojiPicker as EmojiPickerAsync } from '../../ui/util/async-components';
-import Overlay from 'react-overlays/lib/Overlay';
 import classNames from 'classnames';
-import ImmutablePropTypes from 'react-immutable-proptypes';
 import { supportsPassiveEvents } from 'detect-passive-events';
+import PropTypes from 'prop-types';
+import React from 'react';
+import ImmutablePropTypes from 'react-immutable-proptypes';
+import { defineMessages, injectIntl } from 'react-intl';
+import Overlay from 'react-overlays/lib/Overlay';
+
+import { joinPublicPath } from 'soapbox/utils/static';
+
 import { buildCustomEmojis } from '../../emoji/emoji';
-import { join } from 'path';
-import { FE_SUBDIRECTORY } from 'soapbox/build_config';
+import { EmojiPicker as EmojiPickerAsync } from '../../ui/util/async-components';
 
 const messages = defineMessages({
   emoji: { id: 'emoji_button.label', defaultMessage: 'Insert emoji' },
@@ -29,7 +30,7 @@ const messages = defineMessages({
 
 let EmojiPicker, Emoji; // load asynchronously
 
-const backgroundImageFn = () => join(FE_SUBDIRECTORY, 'emoji', 'sheet_13.png');
+const backgroundImageFn = () => require('emoji-datasource/img/twitter/sheets/32.png');
 const listenerOptions = supportsPassiveEvents ? { passive: true } : false;
 
 const categoriesSort = [
@@ -358,8 +359,8 @@ class EmojiPickerDropdown extends React.PureComponent {
         <div ref={this.setTargetRef} className='emoji-button' title={title} aria-label={title} aria-expanded={active} role='button' onClick={this.onToggle} onKeyDown={this.onToggle} tabIndex={0}>
           <img
             className={classNames('emojione', { 'pulse-loading': active && loading })}
-            alt='🙂'
-            src={join(FE_SUBDIRECTORY, 'emoji', '1f602.svg')}
+            alt='😂'
+            src={joinPublicPath('packs/emoji/1f602.svg')}
           />
         </div>
 

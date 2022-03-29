@@ -1,22 +1,26 @@
-import React from 'react';
-import { connect } from 'react-redux';
-import { openModal } from '../../../actions/modal';
 import PropTypes from 'prop-types';
-import SoapboxPropTypes from 'soapbox/utils/soapbox_prop_types';
-import IconButton from '../../../components/icon_button';
+import React from 'react';
 import ImmutablePropTypes from 'react-immutable-proptypes';
-import DropdownMenuContainer from '../../../containers/dropdown_menu_container';
 import { defineMessages, injectIntl } from 'react-intl';
-import { isStaff, isAdmin } from 'soapbox/utils/accounts';
-import { isUserTouching } from 'soapbox/is_mobile';
+import { connect } from 'react-redux';
+import { withRouter } from 'react-router-dom';
+
 import EmojiSelector from 'soapbox/components/emoji_selector';
+import { isUserTouching } from 'soapbox/is_mobile';
+import { isStaff, isAdmin } from 'soapbox/utils/accounts';
 import { getReactForStatus } from 'soapbox/utils/emoji_reacts';
 import { getFeatures } from 'soapbox/utils/features';
+import SoapboxPropTypes from 'soapbox/utils/soapbox_prop_types';
+
+import { openModal } from '../../../actions/modals';
+import IconButton from '../../../components/icon_button';
+import DropdownMenuContainer from '../../../containers/dropdown_menu_container';
 
 const messages = defineMessages({
   delete: { id: 'status.delete', defaultMessage: 'Delete' },
   redraft: { id: 'status.redraft', defaultMessage: 'Delete & re-draft' },
   direct: { id: 'status.direct', defaultMessage: 'Direct message @{name}' },
+  chat: { id: 'status.chat', defaultMessage: 'Chat with @{name}' },
   mention: { id: 'status.mention', defaultMessage: 'Mention @{name}' },
   reply: { id: 'status.reply', defaultMessage: 'Reply' },
   reblog: { id: 'status.reblog', defaultMessage: 'Repost' },
@@ -50,6 +54,7 @@ const messages = defineMessages({
   reactionCry: { id: 'status.reactions.cry', defaultMessage: 'Sad' },
   reactionWeary: { id: 'status.reactions.weary', defaultMessage: 'Weary' },
   emojiPickerExpand: { id: 'status.reactions_expand', defaultMessage: 'Select emoji' },
+  quotePost: { id: 'status.quote', defaultMessage: 'Quote post' },
 });
 
 const mapStateToProps = state => {
@@ -65,27 +70,29 @@ const mapStateToProps = state => {
   };
 };
 
-const mapDispatchToProps = (dispatch) => ({
-  onOpenUnauthorizedModal() {
-    dispatch(openModal('UNAUTHORIZED'));
+const mapDispatchToProps = (dispatch, { status }) => ({
+  onOpenUnauthorizedModal(action) {
+    dispatch(openModal('UNAUTHORIZED', {
+      action,
+      ap_id: status.get('url'),
+    }));
   },
 });
 
+@withRouter
 class ActionBar extends React.PureComponent {
-
-  static contextTypes = {
-    router: PropTypes.object,
-  };
 
   static propTypes = {
     status: ImmutablePropTypes.map.isRequired,
     onReply: PropTypes.func.isRequired,
     onReblog: PropTypes.func.isRequired,
+    onQuote: PropTypes.func.isRequired,
     onFavourite: PropTypes.func.isRequired,
     onEmojiReact: PropTypes.func.isRequired,
     onDelete: PropTypes.func.isRequired,
     onBookmark: PropTypes.func,
     onDirect: PropTypes.func.isRequired,
+    onChat: PropTypes.func,
     onMention: PropTypes.func.isRequired,
     onMute: PropTypes.func,
     onMuteConversation: PropTypes.func,
@@ -107,6 +114,7 @@ class ActionBar extends React.PureComponent {
     handleEmojiSelectorExpand: PropTypes.func.isRequired,
     handleEmojiSelectorUnfocus: PropTypes.func.isRequired,
     features: PropTypes.object.isRequired,
+    history: PropTypes.object,
   };
 
   static defaultProps = {
@@ -119,20 +127,29 @@ class ActionBar extends React.PureComponent {
   }
 
   handleReplyClick = () => {
-    const { me } = this.props;
+    const { me, onReply, onOpenUnauthorizedModal } = this.props;
     if (me) {
-      this.props.onReply(this.props.status);
+      onReply(this.props.status);
     } else {
-      this.props.onOpenUnauthorizedModal();
+      onOpenUnauthorizedModal('REPLY');
     }
   }
 
   handleReblogClick = (e) => {
-    const { me } = this.props;
+    const { me, onReblog, onOpenUnauthorizedModal, status } = this.props;
     if (me) {
-      this.props.onReblog(this.props.status, e);
+      onReblog(status, e);
     } else {
-      this.props.onOpenUnauthorizedModal();
+      onOpenUnauthorizedModal('REBLOG');
+    }
+  }
+
+  handleQuoteClick = () => {
+    const { me, onQuote, onOpenUnauthorizedModal, status } = this.props;
+    if (me) {
+      onQuote(status, this.props.history);
+    } else {
+      onOpenUnauthorizedModal('REBLOG');
     }
   }
 
@@ -164,11 +181,11 @@ class ActionBar extends React.PureComponent {
   }
 
   handleFavouriteClick = () => {
-    const { me } = this.props;
+    const { me, onFavourite, onOpenUnauthorizedModal } = this.props;
     if (me) {
-      this.props.onFavourite(this.props.status);
+      onFavourite(status);
     } else {
-      this.props.onOpenUnauthorizedModal();
+      onOpenUnauthorizedModal('FAVOURITE');
     }
   }
 
@@ -205,11 +222,11 @@ class ActionBar extends React.PureComponent {
 
   handleReactClick = emoji => {
     return e => {
-      const { me } = this.props;
+      const { me, onEmojiReact, onOpenUnauthorizedModal, status } = this.props;
       if (me) {
-        this.props.onEmojiReact(this.props.status, emoji);
+        onEmojiReact(status, emoji);
       } else {
-        this.props.onOpenUnauthorizedModal();
+        onOpenUnauthorizedModal('FAVOURITE');
       }
       this.setState({ emojiSelectorVisible: false, emojiSelectorFocused: false });
     };
@@ -222,19 +239,23 @@ class ActionBar extends React.PureComponent {
   }
 
   handleDeleteClick = () => {
-    this.props.onDelete(this.props.status, this.context.router.history);
+    this.props.onDelete(this.props.status, this.props.history);
   }
 
   handleRedraftClick = () => {
-    this.props.onDelete(this.props.status, this.context.router.history, true);
+    this.props.onDelete(this.props.status, this.props.history, true);
   }
 
   handleDirectClick = () => {
-    this.props.onDirect(this.props.status.get('account'), this.context.router.history);
+    this.props.onDirect(this.props.status.get('account'), this.props.history);
+  }
+
+  handleChatClick = () => {
+    this.props.onChat(this.props.status.get('account'), this.props.history);
   }
 
   handleMentionClick = () => {
-    this.props.onMention(this.props.status.get('account'), this.context.router.history);
+    this.props.onMention(this.props.status.get('account'), this.props.history);
   }
 
   handleMuteClick = () => {
@@ -334,91 +355,224 @@ class ActionBar extends React.PureComponent {
     const menu = [];
 
     if (publicStatus) {
-      menu.push({ text: intl.formatMessage(messages.copy), action: this.handleCopy });
-      // menu.push({ text: intl.formatMessage(messages.embed), action: this.handleEmbed });
+      menu.push({
+        text: intl.formatMessage(messages.copy),
+        action: this.handleCopy,
+        icon: require('@tabler/icons/icons/link.svg'),
+      });
+      // menu.push({
+      //   text: intl.formatMessage(messages.embed),
+      //   action: this.handleEmbed,
+      //   icon: require('feather-icons/dist/icons/link-2.svg'),
+      // });
     }
 
-    menu.push({ text: intl.formatMessage(status.get('bookmarked') ? messages.unbookmark : messages.bookmark), action: this.handleBookmarkClick });
+    if (me) {
+      if (features.bookmarks) {
+        menu.push({
+          text: intl.formatMessage(status.get('bookmarked') ? messages.unbookmark : messages.bookmark),
+          action: this.handleBookmarkClick,
+          icon: require(status.get('bookmarked') ? '@tabler/icons/icons/bookmark-off.svg' : '@tabler/icons/icons/bookmark.svg'),
+        });
+      }
 
-    menu.push(null);
+      menu.push(null);
 
-    if (ownAccount) {
-      if (publicStatus) {
-        menu.push({ text: intl.formatMessage(status.get('pinned') ? messages.unpin : messages.pin), action: this.handlePinClick });
+      if (ownAccount) {
+        if (publicStatus) {
+          menu.push({
+            text: intl.formatMessage(status.get('pinned') ? messages.unpin : messages.pin),
+            action: this.handlePinClick,
+            icon: require(mutingConversation ? '@tabler/icons/icons/pinned-off.svg' : '@tabler/icons/icons/pin.svg'),
+          });
+        } else {
+          if (status.get('visibility') === 'private') {
+            menu.push({
+              text: intl.formatMessage(status.get('reblogged') ? messages.cancel_reblog_private : messages.reblog_private),
+              action: this.handleReblogClick,
+              icon: require('@tabler/icons/icons/repeat.svg'),
+            });
+          }
+        }
+
+        menu.push(null);
+        menu.push({
+          text: intl.formatMessage(mutingConversation ? messages.unmuteConversation : messages.muteConversation),
+          action: this.handleConversationMuteClick,
+          icon: require(mutingConversation ? '@tabler/icons/icons/bell.svg' : '@tabler/icons/icons/bell-off.svg'),
+        });
+        menu.push(null);
+        menu.push({
+          text: intl.formatMessage(messages.delete),
+          action: this.handleDeleteClick,
+          icon: require('@tabler/icons/icons/trash.svg'),
+          destructive: true,
+        });
+        menu.push({
+          text: intl.formatMessage(messages.redraft),
+          action: this.handleRedraftClick,
+          icon: require('@tabler/icons/icons/edit.svg'),
+          destructive: true,
+        });
       } else {
-        if (status.get('visibility') === 'private') {
-          menu.push({ text: intl.formatMessage(status.get('reblogged') ? messages.cancel_reblog_private : messages.reblog_private), action: this.handleReblogClick });
+        menu.push({
+          text: intl.formatMessage(messages.mention, { name: status.getIn(['account', 'username']) }),
+          action: this.handleMentionClick,
+          icon: require('feather-icons/dist/icons/at-sign.svg'),
+        });
+
+        if (status.getIn(['account', 'pleroma', 'accepts_chat_messages'], false) === true) {
+          menu.push({
+            text: intl.formatMessage(messages.chat, { name: status.getIn(['account', 'username']) }),
+            action: this.handleChatClick,
+            icon: require('@tabler/icons/icons/messages.svg'),
+          });
+        } else {
+          menu.push({
+            text: intl.formatMessage(messages.direct, { name: status.getIn(['account', 'username']) }),
+            action: this.handleDirectClick,
+            icon: require('@tabler/icons/icons/mail.svg'),
+          });
+        }
+
+        menu.push(null);
+        menu.push({
+          text: intl.formatMessage(messages.mute, { name: status.getIn(['account', 'username']) }),
+          action: this.handleMuteClick,
+          icon: require('@tabler/icons/icons/circle-x.svg'),
+        });
+        menu.push({
+          text: intl.formatMessage(messages.block, { name: status.getIn(['account', 'username']) }),
+          action: this.handleBlockClick,
+          icon: require('@tabler/icons/icons/ban.svg'),
+        });
+        menu.push({
+          text: intl.formatMessage(messages.report, { name: status.getIn(['account', 'username']) }),
+          action: this.handleReport,
+          icon: require('@tabler/icons/icons/flag.svg'),
+        });
+      }
+
+      if (isStaff) {
+        menu.push(null);
+
+        if (isAdmin) {
+          menu.push({
+            text: intl.formatMessage(messages.admin_account, { name: status.getIn(['account', 'username']) }),
+            href: `/pleroma/admin/#/users/${status.getIn(['account', 'id'])}/`,
+            icon: require('@tabler/icons/icons/gavel.svg'),
+          });
+          menu.push({
+            text: intl.formatMessage(messages.admin_status),
+            href: `/pleroma/admin/#/statuses/${status.get('id')}/`,
+            icon: require('@tabler/icons/icons/pencil.svg'),
+          });
+        }
+
+        menu.push({
+          text: intl.formatMessage(status.get('sensitive') === false ? messages.markStatusSensitive : messages.markStatusNotSensitive),
+          action: this.handleToggleStatusSensitivity,
+          icon: require('@tabler/icons/icons/alert-triangle.svg'),
+        });
+
+        if (!ownAccount) {
+          menu.push({
+            text: intl.formatMessage(messages.deactivateUser, { name: status.getIn(['account', 'username']) }),
+            action: this.handleDeactivateUser,
+            icon: require('@tabler/icons/icons/user-off.svg'),
+          });
+          menu.push({
+            text: intl.formatMessage(messages.deleteUser, { name: status.getIn(['account', 'username']) }),
+            action: this.handleDeleteUser,
+            icon: require('@tabler/icons/icons/user-minus.svg'),
+            destructive: true,
+          });
+          menu.push({
+            text: intl.formatMessage(messages.deleteStatus),
+            action: this.handleDeleteStatus,
+            icon: require('@tabler/icons/icons/trash.svg'),
+            destructive: true,
+          });
         }
       }
-
-      menu.push(null);
-      menu.push({ text: intl.formatMessage(mutingConversation ? messages.unmuteConversation : messages.muteConversation), action: this.handleConversationMuteClick });
-      menu.push(null);
-      menu.push({ text: intl.formatMessage(messages.delete), action: this.handleDeleteClick });
-      menu.push({ text: intl.formatMessage(messages.redraft), action: this.handleRedraftClick });
-    } else {
-      menu.push({ text: intl.formatMessage(messages.mention, { name: status.getIn(['account', 'username']) }), action: this.handleMentionClick });
-      //menu.push({ text: intl.formatMessage(messages.direct, { name: status.getIn(['account', 'username']) }), action: this.handleDirectClick });
-      menu.push(null);
-      menu.push({ text: intl.formatMessage(messages.mute, { name: status.getIn(['account', 'username']) }), action: this.handleMuteClick });
-      menu.push({ text: intl.formatMessage(messages.block, { name: status.getIn(['account', 'username']) }), action: this.handleBlockClick });
-      menu.push({ text: intl.formatMessage(messages.report, { name: status.getIn(['account', 'username']) }), action: this.handleReport });
     }
 
-    if (isStaff) {
-      menu.push(null);
+    const canShare = ('share' in navigator) && status.get('visibility') === 'public';
 
-      if (isAdmin) {
-        menu.push({ text: intl.formatMessage(messages.admin_account, { name: status.getIn(['account', 'username']) }), href: `/pleroma/admin/#/users/${status.getIn(['account', 'id'])}/` });
-        menu.push({ text: intl.formatMessage(messages.admin_status), href: `/pleroma/admin/#/statuses/${status.get('id')}/` });
-      }
-
-      menu.push({ text: intl.formatMessage(status.get('sensitive') === false ? messages.markStatusSensitive : messages.markStatusNotSensitive), action: this.handleToggleStatusSensitivity });
-
-      if (!ownAccount) {
-        menu.push({ text: intl.formatMessage(messages.deactivateUser, { name: status.getIn(['account', 'username']) }), action: this.handleDeactivateUser });
-        menu.push({ text: intl.formatMessage(messages.deleteUser, { name: status.getIn(['account', 'username']) }), action: this.handleDeleteUser });
-        menu.push({ text: intl.formatMessage(messages.deleteStatus), action: this.handleDeleteStatus });
-      }
-    }
-
-    const shareButton = ('share' in navigator) && status.get('visibility') === 'public' && (
-      <div className='detailed-status__button'><IconButton title={intl.formatMessage(messages.share)} icon='share-alt' onClick={this.handleShare} /></div>
+    const shareButton = canShare && (
+      <div className='detailed-status__button'>
+        <IconButton
+          title={intl.formatMessage(messages.share)}
+          src={require('feather-icons/dist/icons/share.svg')}
+          onClick={this.handleShare}
+        />
+      </div>
     );
 
-    let replyIcon;
-    if (status.get('in_reply_to_id', null) === null) {
-      replyIcon = 'reply';
-    } else {
-      replyIcon = 'reply-all';
-    }
+    let reblogIcon = require('feather-icons/dist/icons/repeat.svg');
 
-    let reblogIcon = 'retweet';
-    if (status.get('visibility') === 'direct') reblogIcon = 'envelope';
-    else if (status.get('visibility') === 'private') reblogIcon = 'lock';
+    if (status.get('visibility') === 'direct') {
+      reblogIcon = require('@tabler/icons/icons/mail.svg');
+    } else if (status.get('visibility') === 'private') {
+      reblogIcon = require('@tabler/icons/icons/lock.svg');
+    }
 
     const reblog_disabled = (status.get('visibility') === 'direct' || status.get('visibility') === 'private');
 
+    let reblogButton;
+
+    if (me && features.quotePosts) {
+      const reblogMenu = [
+        {
+          text: intl.formatMessage(status.get('reblogged') ? messages.cancel_reblog_private : messages.reblog),
+          action: this.handleReblogClick,
+          icon: require('@tabler/icons/icons/repeat.svg'),
+        },
+        {
+          text: intl.formatMessage(messages.quotePost),
+          action: this.handleQuoteClick,
+          icon: require('@tabler/icons/icons/quote.svg'),
+        },
+      ];
+
+      reblogButton = (
+        <DropdownMenuContainer
+          items={reblogMenu}
+          disabled={!publicStatus}
+          active={status.get('reblogged')}
+          pressed={status.get('reblogged')}
+          title={!publicStatus ? intl.formatMessage(messages.cannot_reblog) : intl.formatMessage(messages.reblog)}
+          src={reblogIcon}
+          direction='right'
+          text={intl.formatMessage(messages.reblog)}
+          onShiftClick={this.handleReblogClick}
+        />
+      );
+    } else {
+      reblogButton = (
+        <IconButton
+          disabled={reblog_disabled}
+          active={status.get('reblogged')}
+          title={reblog_disabled ? intl.formatMessage(messages.cannot_reblog) : intl.formatMessage(messages.reblog)}
+          src={reblogIcon}
+          onClick={this.handleReblogClick}
+          text={intl.formatMessage(messages.reblog)}
+        />
+      );
+    }
 
     return (
       <div className='detailed-status__action-bar'>
         <div className='detailed-status__button'>
           <IconButton
             title={intl.formatMessage(messages.reply)}
-            icon={status.get('in_reply_to_account_id') === status.getIn(['account', 'id']) ? 'reply' : replyIcon}
+            src={require('feather-icons/dist/icons/message-circle.svg')}
             onClick={this.handleReplyClick}
             text={intl.formatMessage(messages.reply)}
           />
         </div>
         <div className='detailed-status__button'>
-          <IconButton
-            disabled={reblog_disabled}
-            active={status.get('reblogged')}
-            title={reblog_disabled ? intl.formatMessage(messages.cannot_reblog) : intl.formatMessage(messages.reblog)}
-            icon={reblogIcon}
-            onClick={this.handleReblogClick}
-            text={intl.formatMessage(messages.reblog)}
-          />
+          {reblogButton}
         </div>
         <div className='detailed-status__button'>
           <IconButton
@@ -445,7 +599,7 @@ class ActionBar extends React.PureComponent {
             animate
             active={Boolean(meEmojiReact)}
             title={meEmojiTitle}
-            icon='thumbs-up'
+            src={require('@tabler/icons/icons/thumb-up.svg')}
             emoji={meEmojiReact}
             text={meEmojiTitle}
             onClick={this.handleLikeButtonClick}
@@ -454,7 +608,7 @@ class ActionBar extends React.PureComponent {
             className='emoji-picker-expand'
             animate
             title={intl.formatMessage(messages.emojiPickerExpand)}
-            icon='caret-down'
+            src={require('@tabler/icons/icons/caret-down.svg')}
             onKeyUp={handleEmojiSelectorExpand}
             onHover
           />
@@ -462,7 +616,7 @@ class ActionBar extends React.PureComponent {
         {shareButton}
 
         <div className='detailed-status__action-bar-dropdown'>
-          <DropdownMenuContainer size={18} icon='ellipsis-h' items={menu} direction='left' title='More' />
+          <DropdownMenuContainer src={require('@tabler/icons/icons/dots.svg')} items={menu} direction='left' title='More' />
         </div>
       </div>
     );

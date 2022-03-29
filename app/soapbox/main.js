@@ -1,29 +1,31 @@
 'use strict';
 
-import './wdyr';
 import './precheck';
-// FIXME: Push notifications are temporarily removed
-// import * as registerPushNotifications from './actions/push_notifications';
-// import { default as Soapbox, store } from './containers/soapbox';
-import { default as Soapbox } from './containers/soapbox';
+import * as OfflinePluginRuntime from '@lcdp/offline-plugin/runtime';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import ready from './ready';
 
-const perf = require('./performance');
+import { NODE_ENV } from 'soapbox/build_config';
+
+import { default as Soapbox } from './containers/soapbox';
+import * as monitoring from './monitoring';
+import * as perf from './performance';
+import ready from './ready';
 
 function main() {
   perf.start('main()');
+
+  // Sentry
+  monitoring.start();
 
   ready(() => {
     const mountNode = document.getElementById('soapbox');
 
     ReactDOM.render(<Soapbox />, mountNode);
-    if (process.env.NODE_ENV === 'production') {
+
+    if (NODE_ENV === 'production') {
       // avoid offline in dev mode because it's harder to debug
-      require('offline-plugin/runtime').install();
-      // FIXME: Push notifications are temporarily removed
-      // store.dispatch(registerPushNotifications.register());
+      OfflinePluginRuntime.install();
     }
     perf.stop('main()');
   });

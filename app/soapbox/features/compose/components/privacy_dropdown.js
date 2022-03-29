@@ -1,13 +1,15 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { injectIntl, defineMessages } from 'react-intl';
-import IconButton from '../../../components/icon_button';
-import Overlay from 'react-overlays/lib/Overlay';
-import Motion from '../../ui/util/optional_motion';
-import spring from 'react-motion/lib/spring';
-import { supportsPassiveEvents } from 'detect-passive-events';
 import classNames from 'classnames';
+import { supportsPassiveEvents } from 'detect-passive-events';
+import PropTypes from 'prop-types';
+import React from 'react';
+import { injectIntl, defineMessages } from 'react-intl';
+import spring from 'react-motion/lib/spring';
+import Overlay from 'react-overlays/lib/Overlay';
+
 import Icon from 'soapbox/components/icon';
+
+import IconButton from '../../../components/icon_button';
+import Motion from '../../ui/util/optional_motion';
 
 const messages = defineMessages({
   public_short: { id: 'privacy.public.short', defaultMessage: 'Public' },
@@ -131,7 +133,7 @@ class PrivacyDropdownMenu extends React.PureComponent {
             {items.map(item => (
               <div role='option' tabIndex='0' key={item.value} data-index={item.value} onKeyDown={this.handleKeyDown} onClick={this.handleClick} className={classNames('privacy-dropdown__option', { active: item.value === value })} aria-selected={item.value === value} ref={item.value === value ? this.setFocusRef : null}>
                 <div className='privacy-dropdown__option__icon'>
-                  <Icon id={item.icon} fixedWidth />
+                  <Icon src={item.icon} />
                 </div>
 
                 <div className='privacy-dropdown__option__content'>
@@ -171,10 +173,10 @@ class PrivacyDropdown extends React.PureComponent {
     const { intl: { formatMessage } } = props;
 
     this.options = [
-      { icon: 'globe-w', value: 'public', text: formatMessage(messages.public_short), meta: formatMessage(messages.public_long) },
-      { icon: 'unlock', value: 'unlisted', text: formatMessage(messages.unlisted_short), meta: formatMessage(messages.unlisted_long) },
-      { icon: 'lock', value: 'private', text: formatMessage(messages.private_short), meta: formatMessage(messages.private_long) },
-      { icon: 'envelope', value: 'direct', text: formatMessage(messages.direct_short), meta: formatMessage(messages.direct_long) },
+      { icon: require('@tabler/icons/icons/world.svg'), value: 'public', text: formatMessage(messages.public_short), meta: formatMessage(messages.public_long) },
+      { icon: require('@tabler/icons/icons/lock-open.svg'), value: 'unlisted', text: formatMessage(messages.unlisted_short), meta: formatMessage(messages.unlisted_long) },
+      { icon: require('@tabler/icons/icons/lock.svg'), value: 'private', text: formatMessage(messages.private_short), meta: formatMessage(messages.private_long) },
+      { icon: require('@tabler/icons/icons/mail.svg'), value: 'direct', text: formatMessage(messages.direct_short), meta: formatMessage(messages.direct_long) },
     ];
   }
 
@@ -252,16 +254,13 @@ class PrivacyDropdown extends React.PureComponent {
         <div className={classNames('privacy-dropdown__value', { active: this.options.indexOf(valueOption) === 0 })}>
           <IconButton
             className='privacy-dropdown__value-icon'
-            icon={valueOption.icon}
+            src={valueOption.icon}
             title={intl.formatMessage(messages.change_privacy)}
-            size={18}
             expanded={open}
             active={open}
-            inverted
             onClick={this.handleToggle}
             onMouseDown={this.handleMouseDown}
             onKeyDown={this.handleButtonKeyDown}
-            style={{ height: null, lineHeight: '27px' }}
           />
         </div>
 

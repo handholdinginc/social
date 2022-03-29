@@ -1,26 +1,8 @@
-.search-page {
-  .drawer__inner:not(:empty) {
-    min-height: 48px;
-  }
-}
-
-@media screen and (min-width: 600px + (285px * 1) + (10px * 1)) {
-  .search-page .search {
-    display: none;
-  }
-}
-
-@media screen and (max-width: 600px + (285px * 1) + (10px * 1) - 1px) {
-  .search-page .column-header__wrapper {
-    display: none;
-  }
-}
-
 .search {
   position: relative;
 }
 
-.search__input {
+input.search__input {
   @include search-input;
   display: block;
   padding: 7px 30px 6px 10px;
@@ -36,13 +18,14 @@
     outline: 0 !important;
   }
 
-  .fa {
+  .svg-icon {
     @include font-size(16);
     cursor: default;
     display: inline-block;
     position: absolute;
-    top: 8px;
+    top: 50%;
     right: 8px;
+    transform: translateY(-50%);
     z-index: 2;
     width: 18px;
     height: 18px;
@@ -55,13 +38,20 @@
       opacity: 1;
     }
   }
-  .fa-search.active { pointer-events: none; }
 
-  .fa-times-circle {
-    @include font-size(17);
+  .svg-icon--search.active {
+    pointer-events: none;
+  }
+
+  .svg-icon--backspace {
     cursor: pointer;
     color: var(--highlight-text-color);
-    &:hover { color: var(--brand-color); }
+    width: 22px;
+    height: 22px;
+
+    &:hover {
+      color: var(--brand-color);
+    }
   }
 }
 
@@ -125,7 +115,7 @@
     padding: 25px 0;
     background-color: var(--accent-color--med);
 
-    @media (min-width: 895px) {
+    @media (min-width: 896px) {
       display: block;
     }
   }
@@ -154,7 +144,7 @@
     }
   }
 
-  @media (min-width: 895px) and (max-width: 1190px) {
+  @media (min-width: 896px) and (max-width: 1190px) {
     &__title-text,
     &__type-filters-tabs {
       max-width: 900px;
@@ -163,7 +153,7 @@
 }
 
 .search-popout-container {
-  width: 251px;
+  width: 351px;
   @media screen and (max-width: $nav-breakpoint-2) { width: 100%; }
 }
 
@@ -173,4 +163,41 @@
 
 .search__filter-bar:last-child {
   border-bottom: none;
+}
+
+.column {
+  .search {
+    padding: 10px 15px;
+    background-color: var(--foreground-color);
+    border-bottom: 1px solid hsla(var(--primary-text-color_hsl), 0.2);
+  }
+
+  input.search__input {
+    background-color: var(--background-color);
+    border-radius: 8px;
+    padding: 12px 36px 12px 16px;
+  }
+
+  .search__icon .svg-icon {
+    right: 24px;
+  }
+}
+
+.search-results {
+  padding: 15px;
+}
+
+.aliases_search,
+.list-editor__search {
+  .search__icon {
+    position: relative;
+
+    .svg-icon {
+      right: 0;
+    }
+  }
+}
+
+.search .autosuggest-textarea__suggestions {
+  border-radius: 4px;
 }

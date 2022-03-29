@@ -4,9 +4,10 @@
  */
 
 import { getSoapboxConfig } from'soapbox/actions/soapbox';
-import { isPrerendered } from 'soapbox/precheck';
-import { isURL } from 'soapbox/utils/auth';
 import { BACKEND_URL } from 'soapbox/build_config';
+import { isPrerendered } from 'soapbox/precheck';
+import { getBaseURL as getAccountBaseURL } from 'soapbox/utils/accounts';
+import { isURL } from 'soapbox/utils/auth';
 
 export const displayFqn = state => {
   const soapbox = getSoapboxConfig(state);
@@ -26,4 +27,16 @@ export const federationRestrictionsDisclosed = state => {
 export const isStandalone = state => {
   const instanceFetchFailed = state.getIn(['meta', 'instance_fetch_failed'], false);
   return isURL(BACKEND_URL) ? false : (!isPrerendered && instanceFetchFailed);
+};
+
+/**
+ * Get the baseURL of the instance.
+ * @param {object} state
+ * @returns {string} url
+ */
+export const getBaseURL = state => {
+  const me = state.get('me');
+  const account = state.getIn(['accounts', me]);
+
+  return isURL(BACKEND_URL) ? BACKEND_URL : getAccountBaseURL(account);
 };

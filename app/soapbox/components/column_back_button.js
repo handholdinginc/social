@@ -1,19 +1,25 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import { FormattedMessage } from 'react-intl';
-import PropTypes from 'prop-types';
+import { withRouter } from 'react-router-dom';
+
 import Icon from 'soapbox/components/icon';
 
-export default class ColumnBackButton extends React.PureComponent {
+export default @withRouter
+class ColumnBackButton extends React.PureComponent {
 
-  static contextTypes = {
-    router: PropTypes.object,
+  static propTypes = {
+    to: PropTypes.string,
+    history: PropTypes.object,
   };
 
   handleClick = () => {
-    if (window.history && window.history.length === 1) {
-      this.context.router.history.push('/');
+    const { to } = this.props;
+
+    if (window.history?.length === 1) {
+      this.props.history.push(to ? to : '/');
     } else {
-      this.context.router.history.goBack();
+      this.props.history.goBack();
     }
   }
 

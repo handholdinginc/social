@@ -10,10 +10,9 @@ const settings = {
   source_path: 'app',
   public_root_path: FE_BUILD_DIR,
   test_root_path: `${FE_BUILD_DIR}-test`,
-  cache_path: 'tmp/cache/webpacker',
+  cache_path: 'tmp/cache',
   resolved_paths: [],
-  static_assets_extensions: [ '.jpg', '.jpeg', '.png', '.tiff', '.ico', '.svg', '.gif', '.eot', '.otf', '.ttf', '.woff', '.woff2', '.mp3', '.ogg', '.oga' ],
-  extensions: [ '.mjs', '.js', '.sass', '.scss', '.css', '.module.sass', '.module.scss', '.module.css', '.png', '.svg', '.gif', '.jpeg', '.jpg' ],
+  extensions: [ '.mjs', '.js', '.jsx', '.ts', '.tsx', '.sass', '.scss', '.css', '.module.sass', '.module.scss', '.module.css', '.png', '.svg', '.gif', '.jpeg', '.jpg' ],
 };
 
 const outputDir = env.NODE_ENV === 'test' ? settings.test_root_path : settings.public_root_path;

@@ -1,14 +1,15 @@
-import { createSelector } from 'reselect';
 import {
   Map as ImmutableMap,
   List as ImmutableList,
   OrderedSet as ImmutableOrderedSet,
 } from 'immutable';
-import { getDomain } from 'soapbox/utils/accounts';
-import ConfigDB from 'soapbox/utils/config_db';
+import { createSelector } from 'reselect';
+
 import { getSettings } from 'soapbox/actions/settings';
-import { shouldFilter } from 'soapbox/utils/timelines';
+import { getDomain } from 'soapbox/utils/accounts';
 import { validId } from 'soapbox/utils/auth';
+import ConfigDB from 'soapbox/utils/config_db';
+import { shouldFilter } from 'soapbox/utils/timelines';
 
 const getAccountBase         = (state, id) => state.getIn(['accounts', id], null);
 const getAccountCounters     = (state, id) => state.getIn(['accounts_counters', id], null);
@@ -45,6 +46,36 @@ export const makeGetAccount = () => {
       map.setIn(['pleroma', 'admin'], admin);
     });
   });
+};
+
+const findAccountsByUsername = (state, username) => {
+  const accounts = state.get('accounts');
+
+  return accounts.filter(account => {
+    return username.toLowerCase() === account.getIn(['acct'], '').toLowerCase();
+  });
+};
+
+export const findAccountByUsername = (state, username) => {
+  const accounts = findAccountsByUsername(state, username);
+
+  if (accounts.size > 1) {
+    const me = state.get('me');
+    const meURL = state.getIn(['accounts', me, 'url']);
+
+    return accounts.find(account => {
+      try {
+        // If more than one account has the same username, try matching its host
+        const { host } = new URL(account.get('url'));
+        const { host: meHost } = new URL(meURL);
+        return host === meHost;
+      } catch {
+        return false;
+      }
+    });
+  } else {
+    return accounts.first();
+  }
 };
 
 const toServerSideType = columnType => {
@@ -140,6 +171,8 @@ export const getAlerts = createSelector([getAlertsBase], (base) => {
     arr.push({
       message: item.get('message'),
       title: item.get('title'),
+      actionLabel: item.get('actionLabel'),
+      actionLink: item.get('actionLink'),
       key: item.get('key'),
       className: `snackbar snackbar--${item.get('severity', 'info')}`,
       activeClassName: 'snackbar--active',
@@ -152,11 +185,12 @@ export const getAlerts = createSelector([getAlertsBase], (base) => {
 
 export const makeGetNotification = () => {
   return createSelector([
-    (_, base)             => base,
-    (state, _, accountId) => state.getIn(['accounts', accountId]),
-    (state, _, __, targetId) => state.getIn(['accounts', targetId]),
-  ], (base, account, target) => {
-    return base.set('account', account).set('target', target);
+    (state, notification) => notification,
+    (state, notification) => state.getIn(['accounts', notification.get('account')]),
+    (state, notification) => state.getIn(['accounts', notification.get('target')]),
+    (state, notification) => state.getIn(['statuses', notification.get('status')]),
+  ], (notification, account, target, status) => {
+    return notification.merge({ account, target, status });
   });
 };
 
@@ -178,8 +212,8 @@ export const getAccountGallery = createSelector([
 export const makeGetChat = () => {
   return createSelector(
     [
-      (state, { id }) => state.getIn(['chats', id]),
-      (state, { id }) => state.getIn(['accounts', state.getIn(['chats', id, 'account'])]),
+      (state, { id }) => state.getIn(['chats', 'items', id]),
+      (state, { id }) => state.getIn(['accounts', state.getIn(['chats', 'items', id, 'account'])]),
       (state, { last_message }) => state.getIn(['chat_messages', last_message]),
     ],
 

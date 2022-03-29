@@ -1,4 +1,4 @@
-image: node:12
+image: node:14
 
 variables:
   NODE_ENV: test
@@ -26,6 +26,9 @@ lint-js:
   only:
     changes:
       - "**/*.js"
+      - "**/*.jsx"
+      - "**/*.ts"
+      - "**/*.tsx"
       - ".eslintignore"
       - ".eslintrc.js"
 
@@ -86,11 +89,12 @@ docs-deploy:
 
 pages:
   stage: deploy
+  before_script: []
   script:
-    - yarn build
+    # artifacts are kept between jobs
+    - mv static public
   variables:
     NODE_ENV: production
-    FE_BUILD_DIR: public
   artifacts:
     paths:
     - public

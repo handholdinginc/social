@@ -1,6 +1,6 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import ImmutablePureComponent from 'react-immutable-pure-component';
+import { connect } from 'react-redux';
 import { Switch, Route, Redirect } from 'react-router-dom';
 import NotificationsContainer from 'soapbox/features/ui/containers/notifications_container';
 import ModalContainer from 'soapbox/features/ui/containers/modal_container';
@@ -9,8 +9,20 @@ import Footer from './components/footer';
 import HandholdingLandingPage from '../handholding_landing_page';
 import LandingPage from '../landing_page';
 import AboutPage from '../about';
+
 import { getSoapboxConfig } from 'soapbox/actions/soapbox';
+import BundleContainer from 'soapbox/features/ui/containers/bundle_container';
+import {
+  NotificationsContainer,
+  ModalContainer,
+} from 'soapbox/features/ui/util/async-components';
 import { isStandalone } from 'soapbox/utils/state';
+
+import AboutPage from '../about';
+import LandingPage from '../landing_page';
+
+import Footer from './components/footer';
+import Header from './components/header';
 
 const mapStateToProps = (state, props) => ({
   soapbox: getSoapboxConfig(state),
@@ -43,8 +55,14 @@ class PublicLayout extends ImmutablePureComponent {
             </Switch>
         </div>
         <Footer />
-        <NotificationsContainer />
-        <ModalContainer />
+
+        <BundleContainer fetchComponent={NotificationsContainer}>
+          {Component => <Component />}
+        </BundleContainer>
+
+        <BundleContainer fetchComponent={ModalContainer}>
+          {Component => <Component />}
+        </BundleContainer>
       </div>
     );
   }

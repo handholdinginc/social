@@ -1,5 +1,5 @@
 // Fonts from elsewhere
-@import '~fork-awesome/css/fork-awesome.css';
+@import '~line-awesome/dist/font-awesome-line-awesome/css/all.css';
 @import '~@fontsource/roboto/300.css';
 @import '~@fontsource/roboto/400.css';
 @import '~@fontsource/roboto/700.css';
@@ -28,6 +28,10 @@
 @import 'dyslexic';
 @import 'demetricator';
 @import 'chats';
+@import 'navigation';
+@import 'placeholder';
+@import 'autosuggest';
+@import 'developers';
 
 // COMPONENTS
 @import 'components/buttons';
@@ -47,6 +51,7 @@
 @import 'components/emoji-reacts';
 @import 'components/status';
 @import 'components/reply-indicator';
+@import 'components/reply-mentions';
 @import 'components/detailed-status';
 @import 'components/list-forms';
 @import 'components/media-gallery';
@@ -57,7 +62,6 @@
 @import 'components/react-toggle';
 @import 'components/getting-started';
 @import 'components/promo-panel';
-@import 'components/drawer';
 @import 'components/still-image';
 @import 'components/timeline-queue-header';
 @import 'components/badge';
@@ -85,6 +89,12 @@
 @import 'components/remote-timeline';
 @import 'components/federation-restrictions';
 @import 'components/aliases';
+@import 'components/icon';
+@import 'components/profile-stats';
+@import 'components/progress-circle';
+@import 'components/register-invite';
+@import 'components/radio-button';
+@import 'components/directory';
 
 // Holiday
 @import 'holiday/halloween';

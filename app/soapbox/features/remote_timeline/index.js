@@ -1,15 +1,18 @@
-import React from 'react';
-import { connect } from 'react-redux';
-import { defineMessages, injectIntl, FormattedMessage } from 'react-intl';
 import PropTypes from 'prop-types';
-import StatusListContainer from '../ui/containers/status_list_container';
-import Column from '../../components/column';
-import HomeColumnHeader from '../../components/home_column_header';
-import PinnedHostsPicker from './components/pinned_hosts_picker';
-import IconButton from 'soapbox/components/icon_button';
-import { expandRemoteTimeline } from '../../actions/timelines';
-import { connectRemoteStream } from '../../actions/streaming';
+import React from 'react';
+import { defineMessages, injectIntl, FormattedMessage } from 'react-intl';
+import { connect } from 'react-redux';
+import { withRouter } from 'react-router-dom';
+
 import { getSettings } from 'soapbox/actions/settings';
+import IconButton from 'soapbox/components/icon_button';
+import Column from 'soapbox/features/ui/components/column';
+
+import { connectRemoteStream } from '../../actions/streaming';
+import { expandRemoteTimeline } from '../../actions/timelines';
+import StatusListContainer from '../ui/containers/status_list_container';
+
+import PinnedHostsPicker from './components/pinned_hosts_picker';
 
 const messages = defineMessages({
   title: { id: 'column.remote', defaultMessage: 'Federated timeline' },
@@ -33,11 +36,8 @@ const mapStateToProps = (state, props) => {
 
 export default @connect(mapStateToProps)
 @injectIntl
+@withRouter
 class RemoteTimeline extends React.PureComponent {
-
-  static contextTypes = {
-    router: PropTypes.object,
-  };
 
   static propTypes = {
     dispatch: PropTypes.func.isRequired,
@@ -47,6 +47,7 @@ class RemoteTimeline extends React.PureComponent {
     timelineId: PropTypes.string,
     instance: PropTypes.string.isRequired,
     pinned: PropTypes.bool,
+    history: PropTypes.object,
   };
 
   componentDidMount() {
@@ -73,7 +74,7 @@ class RemoteTimeline extends React.PureComponent {
   }
 
   handleCloseClick = e => {
-    this.context.router.history.push('/timeline/fediverse');
+    this.props.history.push('/timeline/fediverse');
   }
 
   handleLoadMore = maxId => {
@@ -82,14 +83,13 @@ class RemoteTimeline extends React.PureComponent {
   }
 
   render() {
-    const { intl, hasUnread, onlyMedia, timelineId, instance, pinned } = this.props;
+    const { intl, onlyMedia, timelineId, instance, pinned } = this.props;
 
     return (
-      <Column label={intl.formatMessage(messages.title)}>
-        <HomeColumnHeader activeItem='fediverse' active={hasUnread} />
+      <Column label={intl.formatMessage(messages.title)} heading={instance} transparent>
         <PinnedHostsPicker host={instance} />
         {!pinned && <div className='timeline-filter-message'>
-          <IconButton icon='close' onClick={this.handleCloseClick} />
+          <IconButton src={require('@tabler/icons/icons/x.svg')} onClick={this.handleCloseClick} />
           <FormattedMessage
             id='remote_timeline.filter_message'
             defaultMessage='You are viewing the timeline of {instance}.'
