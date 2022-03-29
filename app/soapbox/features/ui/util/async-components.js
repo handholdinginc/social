@@ -316,6 +316,7 @@ export function ModerationLog() {
 
 export function SignupPage() {
   return import('../../landing_page');
+}
 
 export function UserPanel() {
   return import(/* webpackChunkName: "features/ui" */'../components/user_panel');

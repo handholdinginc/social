@@ -2,13 +2,6 @@ import React from 'react';
 import ImmutablePureComponent from 'react-immutable-pure-component';
 import { connect } from 'react-redux';
 import { Switch, Route, Redirect } from 'react-router-dom';
-import NotificationsContainer from 'soapbox/features/ui/containers/notifications_container';
-import ModalContainer from 'soapbox/features/ui/containers/modal_container';
-import Header from './components/header';
-import Footer from './components/footer';
-import HandholdingLandingPage from '../handholding_landing_page';
-import LandingPage from '../landing_page';
-import AboutPage from '../about';
 
 import { getSoapboxConfig } from 'soapbox/actions/soapbox';
 import BundleContainer from 'soapbox/features/ui/containers/bundle_container';
@@ -19,7 +12,9 @@ import {
 import { isStandalone } from 'soapbox/utils/state';
 
 import AboutPage from '../about';
+import HandholdingLandingPage from '../handholding_landing_page';
 import LandingPage from '../landing_page';
+
 
 import Footer from './components/footer';
 import Header from './components/header';

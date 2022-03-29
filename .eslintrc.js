@@ -68,7 +68,7 @@ module.exports = {
     'consistent-return': 'error',
     'dot-notation': 'error',
     eqeqeq: 'error',
-    indent: ['error', 2, {
+    indent: ['warn', 2, {
       ignoredNodes: ['TemplateLiteral'],
     }],
     'jsx-quotes': ['error', 'prefer-single'],
@@ -99,7 +99,7 @@ module.exports = {
     'no-unreachable': 'error',
     'no-unused-expressions': 'error',
     'no-unused-vars': [
-      'error',
+      'warn',
       {
         vars: 'all',
         args: 'none',
@@ -133,7 +133,7 @@ module.exports = {
     'react/jsx-curly-spacing': 'error',
     'react/jsx-equals-spacing': 'error',
     'react/jsx-first-prop-new-line': ['error', 'multiline-multiprop'],
-    'react/jsx-indent': ['error', 2],
+    'react/jsx-indent': ['warn', 2],
     'react/jsx-no-bind': 'error',
     'react/jsx-no-duplicate-props': 'error',
     'react/jsx-no-undef': 'error',
