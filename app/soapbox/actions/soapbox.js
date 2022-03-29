@@ -17,20 +17,22 @@ export const SOAPBOX_CONFIG_REMEMBER_FAIL    = 'SOAPBOX_CONFIG_REMEMBER_FAIL';
 const allowedEmoji = ImmutableList([
   '👍',
   '❤',
-  '😆',
-  '😮',
-  '😢',
-  '😩',
+  '🤣',
+  '😭',
+  '👎',
+  '🔥',
+  '🥺',
 ]);
 
 // https://git.pleroma.social/pleroma/pleroma/-/issues/2355
 const allowedEmojiRGI = ImmutableList([
   '👍',
   '❤️',
-  '😆',
-  '😮',
-  '😢',
-  '😩',
+  '🤣',
+  '😭',
+  '👎',
+  '🔥',
+  '🥺',
 ]);
 
 const year = new Date().getFullYear();
