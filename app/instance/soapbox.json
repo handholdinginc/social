@@ -11,7 +11,7 @@
     "promoPanel": {
         "items": [{
             "icon": "comment-o",
-            "text": "Lightweight Frontend (Bloat)",
+            "text": "Bloat FE",
             "url": "https://bloat.handholding.io"
         }]
     },
