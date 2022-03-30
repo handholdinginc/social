@@ -99,13 +99,23 @@ class PrimaryNavigation extends React.PureComponent {
                 <FormattedMessage id='tabs_bar.chats' defaultMessage='Chats' />
               </NavLink>
             ) : (
-              <NavLink to='/messages' className='btn grouped'>
-                <Icon
-                  src={require('@tabler/icons/icons/mail.svg')}
-                  className={classNames('primary-navigation__icon', { 'svg-icon--active': ['/messages', '/conversations'].includes(location.pathname) })}
-                />
-                <FormattedMessage id='navigation.direct_messages' defaultMessage='Messages' />
-              </NavLink>
+                <>
+                    <NavLink key='chats' className='btn grouped' to='/chats' data-preview-title-id='column.chats'>
+                        <IconWithCounter
+                            src={require('@tabler/icons/icons/messages.svg')}
+                            className={classNames('primary-navigation__icon', { 'svg-icon--active': location.pathname === '/chats' })}
+                            count={chatsCount}
+                        />
+                        <FormattedMessage id='tabs_bar.chats' defaultMessage='Chats' />
+                    </NavLink>
+                    <NavLink to='/messages' className='btn grouped'>
+                        <Icon
+                            src={require('@tabler/icons/icons/mail.svg')}
+                            className={classNames('primary-navigation__icon', { 'svg-icon--active': ['/messages', '/conversations'].includes(location.pathname) })}
+                        />
+                        <FormattedMessage id='navigation.direct_messages' defaultMessage='Direct Messages' />
+                    </NavLink>
+                </>
             )
           )}
 
