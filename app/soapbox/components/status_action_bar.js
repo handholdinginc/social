@@ -530,6 +530,7 @@ class StatusActionBar extends ImmutablePureComponent {
 
     const menu = this._makeMenu(publicStatus);
     let reblogIcon = require('feather-icons/dist/icons/repeat.svg');
+    const requoteIcon = require('@tabler/icons/icons/quote.svg');
     let replyTitle;
 
     if (status.get('visibility') === 'direct') {
@@ -538,7 +539,8 @@ class StatusActionBar extends ImmutablePureComponent {
       reblogIcon = require('@tabler/icons/icons/lock.svg');
     }
 
-    let reblogButton;
+   let reblogButton;
+   let reblogButtonNoQuote;
 
     if (me && features.quotePosts) {
       const reblogMenu = [
@@ -561,11 +563,24 @@ class StatusActionBar extends ImmutablePureComponent {
           active={status.get('reblogged')}
           pressed={status.get('reblogged')}
           title={!publicStatus ? intl.formatMessage(messages.cannot_reblog) : intl.formatMessage(messages.reblog)}
-          src={reblogIcon}
+          src={requoteIcon}
           direction='right'
           onShiftClick={this.handleReblogClick}
         />
       );
+
+      reblogButtonNoQuote = (
+        <IconButton
+          className='status__action-bar-button'
+          disabled={!publicStatus}
+          active={status.get('reblogged')}
+          pressed={status.get('reblogged')}
+          title={!publicStatus ? intl.formatMessage(messages.cannot_reblog) : intl.formatMessage(messages.reblog)}
+          src={reblogIcon}
+          onClick={this.handleReblogClick}
+        />
+      );
+
     } else {
       reblogButton = (
         <IconButton
@@ -605,6 +620,7 @@ class StatusActionBar extends ImmutablePureComponent {
         </div>
         <div className='status__action-bar__counter status__action-bar__counter--reblog'>
           {reblogButton}
+          {reblogButtonNoQuote}
           {reblogCount !== 0 && <span className='detailed-status__link' type='button' role='presentation' onClick={this.handleOpenReblogsModal}>{reblogCount}</span>}
         </div>
         <div
